@@ -711,11 +711,13 @@
             <p>Dezvoltat cu ❤️ pentru educația românească</p>
         </div>
     </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 
     <script>
         // Supabase Configuration (Replace with your actual keys)
         const SUPABASE_URL = 'https://supabase.com/dashboard/project/hamxcoojjmiibjuehaxi';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhbXhjb29qam1paWJqdWVoYXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyOTQ4NjAsImV4cCI6MjA2OTg3MDg2MH0.Gs8P10ZP5DgsMRH-ymZzy4PlFIa9fWSg_k7Kz4Lfurc';
+        const supabase = createClient(supabase.com/dashboard/project/hamxcoojjmiibjuehaxi, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhbXhjb29qam1paWJqdWVoYXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyOTQ4NjAsImV4cCI6MjA2OTg3MDg2MH0.Gs8P10ZP5DgsMRH-ymZzy4PlFIa9fWSg_k7Kz4Lfurc);
 
         // Stripe Configuration (Replace with your actual publishable key)
         const STRIPE_PUBLISHABLE_KEY = 'YOUR_STRIPE_PUBLISHABLE_KEY_HERE';
@@ -773,7 +775,7 @@
                 console.log(`${isLogin ? 'Login' : 'Register'} attempt for: ${email}`);
                 
                 // Example integration:
-                /*
+                /
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password,
@@ -808,13 +810,14 @@
         });
 
         // Register user function
+        const supabase = supabase || createClient(supabase.com/dashboard/project/hamxcoojjmiibjuehaxi, eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhbXhjb29qam1paWJqdWVoYXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyOTQ4NjAsImV4cCI6MjA2OTg3MDg2MH0.Gs8P10ZP5DgsMRH-ymZzy4PlFIa9fWSg_k7Kz4Lfurc); // doar dacă nu ai definit deja
         async function registerUser(name, email, password, studentClass) {
             try {
                 // Supabase registration code here
                 console.log(`Registering user: ${name}, ${email}, Class: ${studentClass}`);
                 
                 // Example integration:
-                /*
+                /
                 const { data, error } = await supabase.auth.signUp({
                     email: email,
                     password: password,
@@ -830,7 +833,7 @@
                 
                 // Also add user to your users table
                 const { data: userData, error: userError } = await supabase
-                    .from('users')
+                    .from('user')
                     .insert([
                         {
                             email: email,
@@ -993,7 +996,7 @@
         function trackProgress(sectionId, itemId, progressType) {
             try {
                 // Track user progress in Supabase
-                /*
+                /
                 const { data, error } = await supabase
                     .from('user_progress')
                     .upsert([
