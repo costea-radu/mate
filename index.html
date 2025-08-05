@@ -712,451 +712,112 @@
         </div>
     </footer>
 
-    <script>
-        // Supabase Configuration (Replace with your actual keys)
-        const SUPABASE_URL = 'https://supabase.com/dashboard/project/hamxcoojjmiibjuehaxi';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhbXhjb29qam1paWJqdWVoYXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyOTQ4NjAsImV4cCI6MjA2OTg3MDg2MH0.Gs8P10ZP5DgsMRH-ymZzy4PlFIa9fWSg_k7Kz4Lfurc';
+    <script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
-        // Stripe Configuration (Replace with your actual publishable key)
-        const STRIPE_PUBLISHABLE_KEY = 'YOUR_STRIPE_PUBLISHABLE_KEY_HERE';
+  // 🔑 Supabase Configuration
+  const SUPABASE_URL = 'https://hamxcoojjmiibjuehaxi.supabase.co'
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhbXhjb29qam1paWJqdWVoYXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyOTQ4NjAsImV4cCI6MjA2OTg3MDg2MH0.Gs8P10ZP5DgsMRH-ymZzy4PlFIa9fWSg_k7Kz4Lfurc'
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-        // Your payment account details (Replace with your actual account)
-        const PAYMENT_ACCOUNT = 'YOUR_PAYMENT_ACCOUNT_HERE';
+  // 🔐 Înregistrare utilizator
+  async function registerUser(name, email, password, studentClass) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password
+      })
 
-        // Mobile menu toggle
-        function toggleMobileMenu() {
-            const navLinks = document.getElementById('navLinks');
-            navLinks.classList.toggle('active');
-        }
+      if (error) throw error
 
-        // Modal functions
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-        }
-
-        // Add new page function (Template for adding new content)
-        function addNewPage(sectionId) {
-            console.log(`Adding new page for section: ${sectionId}`);
-            // Template code for adding new pages
-            // You can copy and modify this structure:
-            /*
-            <div class="new-page">
-                <h2>Nume pagină</h2>
-                <div class="content">
-                    <!-- Your content here -->
-                    <!-- Links to Wayground.com, Blooket, Brisk tests -->
-                    <!-- PDF or Word file links -->
-                </div>
-            </div>
-            */
-           // alert(`Aici vei adăuga conținutul pentru: ${sectionId}\nPoți adăuga linkuri către:\n- Wayground.com\n- Blooket\n- Teste Brisk\n- Fișiere PDF/Word`);
-        }
-
-        // Authentication functions (Integration with Supabase)
-        async function authenticateUser(email, password, isLogin = true) {
-            try {
-                // Supabase authentication code here
-                console.log(`${isLogin ? 'Login' : 'Register'} attempt for: ${email}`);
-                
-                // Example integration:
-                /*
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
-                */
-                
-                alert(`${isLogin ? 'Conectare' : 'Înregistrare'} reușită!`);
-                closeModal(isLogin ? 'loginModal' : 'registerModal');
-                
-            } catch (error) {
-                console.error('Authentication error:', error);
-                alert('Eroare la autentificare. Te rog încearcă din nou.');
+      const user = data.user
+      if (user) {
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: user.id,
+              email,
+              full_name: name,
+              student_class: studentClass,
+              subscription_type: 'free'
             }
-        }
+          ])
+        if (insertError) throw insertError
+      }
 
-        // Form submissions
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            authenticateUser(email, password, true);
-        });
+      alert('Înregistrare reușită! Verifică-ți emailul pentru confirmare.')
+      closeModal('registerModal')
+    } catch (error) {
+      console.error('Registration error:', error)
+      alert('Eroare la înregistrare. Te rog încearcă din nou.')
+    }
+  }
 
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const studentClass = document.getElementById('registerClass').value;
-            
-            registerUser(name, email, password, studentClass);
-        });
+  // 🔓 Login utilizator
+  async function authenticateUser(email, password, isLogin = true) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
 
-        // Register user function
-        async function registerUser(name, email, password, studentClass) {
-            try {
-                // Supabase registration code here
-                console.log(`Registering user: ${name}, ${email}, Class: ${studentClass}`);
-                
-                // Example integration:
-                /*
-                const { data, error } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                    options: {
-                        data: {
-                            full_name: name,
-                            student_class: studentClass
-                        }
-                    }
-                });
-                
-                if (error) throw error;
-                
-                // Also add user to your users table
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .insert([
-                        {
-                            email: email,
-                            full_name: name,
-                            student_class: studentClass,
-                            subscription_type: 'free'
-                        }
-                    ]);
-                */
-                
-                alert('Înregistrare reușită! Verifică-ți emailul pentru confirmare.');
-                closeModal('registerModal');
-                
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('Eroare la înregistrare. Te rog încearcă din nou.');
-            }
-        }
+      if (error) throw error
 
-        // Forum function
-        function openForum() {
-            // Redirect to forum page or open forum modal
-            console.log('Opening forum...');
-            alert('Forumul va fi disponibil în curând!\nAici poți adăuga:\n- Sistem de discuții\n- Q&A cu profesori\n- Grupuri de studiu');
-            
-            // Example: window.location.href = '/forum.html';
-        }
+      alert('Conectare reușită!')
+      closeModal('loginModal')
+      document.getElementById('logoutButton').style.display = 'inline'
+    } catch (error) {
+      console.error('Authentication error:', error)
+      alert('Eroare la autentificare. Te rog încearcă din nou.')
+    }
+  }
 
-        // Premium subscription function
-        async function subscribePremium() {
-            try {
-                console.log('Initiating premium subscription...');
-                
-                // Stripe payment integration
-                /*
-                const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-                
-                // Create checkout session
-                const response = await fetch('/create-checkout-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        priceId: 'price_premium_monthly', // Your Stripe price ID
-                        successUrl: window.location.origin + '/success',
-                        cancelUrl: window.location.origin + '/cancel'
-                    }),
-                });
-                
-                const session = await response.json();
-                
-                // Redirect to Stripe Checkout
-                const result = await stripe.redirectToCheckout({
-                    sessionId: session.id,
-                });
-                */
-                
-                // Temporary alert for demo
-                alert('Redirecționare către plată...\nMetode disponibile:\n- Stripe\n- Google Pay\n- Apple Pay\n\nCont plată: ' + PAYMENT_ACCOUNT);
-                
-            } catch (error) {
-                console.error('Subscription error:', error);
-                alert('Eroare la procesarea plății. Te rog încearcă din nou.');
-            }
-        }
+  // 🚪 Logout
+  async function logoutUser() {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      alert('Eroare la deconectare.')
+    } else {
+      alert('Te-ai deconectat cu succes.')
+      document.getElementById('logoutButton').style.display = 'none'
+    }
+  }
 
-        // Book live session function
-        async function bookLiveSession() {
-            try {
-                console.log('Booking live session...');
-                
-                // Check if user is authenticated
-                // const user = await getCurrentUser();
-                // if (!user) {
-                //     alert('Te rog să te conectezi pentru a rezerva o ședință.');
-                //     openModal('loginModal');
-                //     return;
-                // }
-                
-                // Payment and booking logic
-                /*
-                // First, process payment
-                const paymentResult = await processPayment(99); // 99 RON
-                
-                if (paymentResult.success) {
-                    // Book the session
-                    const { data, error } = await supabase
-                        .from('live_sessions')
-                        .insert([
-                            {
-                                user_id: user.id,
-                                session_date: selectedDate,
-                                session_time: selectedTime,
-                                status: 'confirmed',
-                                meeting_link: generateJitsiLink()
-                            }
-                        ]);
-                }
-                */
-                
-                // Temporary implementation
-                const sessionDate = prompt('Introduceți data dorită (YYYY-MM-DD):');
-                const sessionTime = prompt('Introduceți ora dorită (HH:MM):');
-                
-                if (sessionDate && sessionTime) {
-                    alert(`Ședință rezervată pentru ${sessionDate} la ${sessionTime}\n\nLink Google Meet: https://meet.google.com/xxx-xxx-xxx\nSau Jitsi: https://meet.jit.si/mate-session-${Date.now()}\n\nVeți primi confirmarea pe email.`);
-                }
-                
-            } catch (error) {
-                console.error('Booking error:', error);
-                alert('Eroare la rezervarea ședinței. Te rog încearcă din nou.');
-            }
-        }
+  // 🔍 Verificare sesiune
+  async function checkAuthState() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      document.getElementById('logoutButton').style.display = 'inline'
+    }
+  }
 
-        // Generate Jitsi meeting link
-        function generateJitsiLink() {
-            const roomName = `mate-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            return `https://meet.jit.si/${roomName}`;
-        }
+  // 📋 Form submissions
+  document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault()
+    const email = document.getElementById('loginEmail').value
+    const password = document.getElementById('loginPassword').value
+    authenticateUser(email, password, true)
+  })
 
-        // Process payment function
-        async function processPayment(amount) {
-            try {
-                // Stripe payment processing
-                /*
-                const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
-                
-                const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-                    body: { amount: amount * 100 } // Convert to cents
-                });
-                
-                if (error) throw error;
-                
-                const { error: paymentError } = await stripe.confirmCardPayment(
-                    data.client_secret,
-                    {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: {
-                                name: 'Customer Name',
-                            },
-                        }
-                    }
-                );
-                
-                return { success: !paymentError, error: paymentError };
-                */
-                
-                // Temporary implementation
-                return { success: true };
-                
-            } catch (error) {
-                console.error('Payment error:', error);
-                return { success: false, error: error };
-            }
-        }
+  document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault()
+    const name = document.getElementById('registerName').value
+    const email = document.getElementById('registerEmail').value
+    const password = document.getElementById('registerPassword').value
+    const studentClass = document.getElementById('registerClass').value
+    registerUser(name, email, password, studentClass)
+  })
 
-        // Progress tracking functions
-        function trackProgress(sectionId, itemId, progressType) {
-            try {
-                // Track user progress in Supabase
-                /*
-                const { data, error } = await supabase
-                    .from('user_progress')
-                    .upsert([
-                        {
-                            user_id: getCurrentUserId(),
-                            section_id: sectionId,
-                            item_id: itemId,
-                            progress_type: progressType, // 'lesson', 'exercise', 'test'
-                            completed_at: new Date().toISOString(),
-                            score: getScore() // if applicable
-                        }
-                    ]);
-                */
-                
-                console.log(`Progress tracked: ${sectionId}/${itemId} - ${progressType}`);
-                
-            } catch (error) {
-                console.error('Progress tracking error:', error);
-            }
-        }
+  document.getElementById('logoutButton').addEventListener('click', logoutUser)
 
-        // Load user progress
-        async function loadUserProgress() {
-            try {
-                // Load user's progress from Supabase
-                /*
-                const { data, error } = await supabase
-                    .from('user_progress')
-                    .select('*')
-                    .eq('user_id', getCurrentUserId());
-                
-                if (error) throw error;
-                
-                // Update UI with progress indicators
-                data.forEach(progress => {
-                    updateProgressUI(progress.section_id, progress.item_id, progress.progress_type);
-                });
-                */
-                
-            } catch (error) {
-                console.error('Error loading progress:', error);
-            }
-        }
+  // 🔄 Inițializare aplicație
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Mate platform initialized')
+    checkAuthState()
+    animateOnScroll()
+  })
+</script>
 
-        // Smooth scrolling for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Add animation on scroll
-        function animateOnScroll() {
-            const elements = document.querySelectorAll('.section-card, .special-card');
-            
-            elements.forEach(element => {
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 150;
-                
-                if (elementTop < window.innerHeight - elementVisible) {
-                    element.classList.add('fade-in');
-                }
-            });
-        }
-
-        window.addEventListener('scroll', animateOnScroll);
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Mate platform initialized');
-            
-            // Check if user is already logged in
-            // checkAuthState();
-            
-            // Load user progress if authenticated
-            // loadUserProgress();
-            
-            // Initialize animations
-            animateOnScroll();
-            
-            console.log('Ready to add content! Use the addNewPage() function template to add new pages.');
-        });
-
-        // Template for adding new content pages
-        /*
-        TEMPLATE FOR ADDING NEW PAGES:
-        
-        1. Create a new HTML file (e.g., clasa5-lectii.html)
-        2. Use this structure:
-        
-        <!DOCTYPE html>
-        <html lang="ro">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Clasa 5 - Lecții | Mate</title>
-            <!-- Include same CSS and JS as main page -->
-        </head>
-        <body>
-            <header>
-                <!-- Same header as main page -->
-            </header>
-            
-            <main class="container">
-                <section class="content-page">
-                    <h1>Clasa a 5-a - Lecții</h1>
-                    
-                    <div class="lessons-grid">
-                        <div class="lesson-card">
-                            <h3>Nume lecție</h3>
-                            <p>Descriere scurtă</p>
-                            
-                            <!-- Links to external resources -->
-                            <a href="wayground.com/link" class="btn btn-primary">
-                                <i class="fas fa-external-link-alt"></i> Wayground Test
-                            </a>
-                            
-                            <a href="blooket.com/link" class="btn btn-secondary">
-                                <i class="fas fa-gamepad"></i> Blooket Game
-                            </a>
-                            
-                            <a href="files/lesson.pdf" class="btn btn-success">
-                                <i class="fas fa-file-pdf"></i> Download PDF
-                            </a>
-                            
-                            <!-- Brisk test embed -->
-                            <div class="brisk-embed">
-                                <!-- Embed Brisk test here -->
-                            </div>
-                        </div>
-                        
-                        <!-- Add more lesson cards as needed -->
-                    </div>
-                </section>
-            </main>
-            
-            <footer>
-                <!-- Same footer as main page -->
-            </footer>
-        </body>
-        </html>
-        
-        3. Update the addNewPage() function to redirect to your new page:
-           window.location.href = `${sectionId}.html`;
-        
-        4. For progress tracking, add:
-           trackProgress('clasa5', 'lectia1', 'lesson');
-        */
-
-        console.log('🚀 Mate Platform Ready!');
-        console.log('📝 To add new content:');
-        console.log('1. Use the template above to create new pages');
-        console.log('2. Add your Supabase credentials');
-        console.log('3. Add your Stripe credentials');
-        console.log('4. Configure your payment account');
-        console.log('5. Test authentication and payments');
-    </script>
 </body>
 </html>
