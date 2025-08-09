@@ -1,0 +1,25 @@
+# Ignoră foldere comune de build și dependințe
+node_modules/
+dist/
+build/
+.cache/
+
+# Fișiere de configurare locală
+.env
+.env.local
+.env.*.local
+
+# Sisteme de operare
+.DS_Store
+Thumbs.db
+
+# Fișiere editor
+.vscode/
+.idea/
+*.swp
+
+# Loguri
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
