@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<title>Teste Matematică</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+<h1>Teste Matematică</h1>
+
+<div id="auth">
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Parola" />
+  <button id="login">Login</button>
+  <button id="signup">Înregistrare</button>
+</div>
+
+<div id="user-area" style="display:none;">
+  <p>Bun venit, <span id="user-email"></span></p>
+  <button id="subscribe">Abonează-te</button>
+  <button id="logout">Logout</button>
+</div>
+
+<script>
+const SUPABASE_URL = "https://nuygmshhccetzqxewris.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51eWdtc2hoY2NldHpxeGV3cmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3NjI5MDcsImV4cCI6MjA3MDMzODkwN30.Q2v6cCCvWX5A8sU5Nk14MNnoVPCyZoYZJYEfDLZqFUE";
+const STRIPE_PUBLISHABLE_KEY = "pk_live_51RrH57Iw53SYbkmL87FRVW1IFJsRROrzYgR7MorMGWsH1VDz69AzKVJWfRB7bmusvkGJXbLNPbe1QapKhDgG0x2l00vmpB2pg7";
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+document.getElementById('login').addEventListener('click', async () => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value
+  });
+  if (error) return alert(error.message);
+  showUser();
+});
+
+document.getElementById('signup').addEventListener('click', async () => {
+  const { data, error } = await supabase.auth.signUp({
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value
+  });
+  if (error) return alert(error.message);
+  alert("Verifică email-ul pentru confirmare!");
+});
+
+document.getElementById('logout').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  location.reload();
+});
+
+async function showUser() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    document.getElementById('auth').style.display = "none";
+    document.getElementById('user-area').style.display = "block";
+    document.getElementById('user-email').textContent = user.email;
+  }
+}
+showUser();
+
+document.getElementById('subscribe').addEventListener('click', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert("Trebuie să fii logat");
+
+  const resp = await fetch('/create-checkout-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: user.id, plan: "premium" })
+  });
+  const session = await resp.json();
+  await stripe.redirectToCheckout({ sessionId: session.id });
+});
+</script>
+</body>
+</html>
