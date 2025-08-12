@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mate - Platformă de Matematică</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.39.0/umd/supabase.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-links a:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .user-info {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .user-info.show {
+            display: flex;
+        }
+
+        .premium-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4a);
+            color: #333;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Mobile menu */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .mobile-menu span {
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+
+        /* Main content */
+        main {
+            margin-top: 100px;
+            padding: 2rem 0;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Sections Grid */
+        .sections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .section-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-card i {
+            font-size: 1.2rem;
+        }
+
+        .subsections {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .subsection-btn {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #f8f9ff, #e8ecff);
+            border: 1px solid #e0e7ff;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #667eea;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .subsection-btn:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .premium-lock {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: #ffd700;
+            font-size: 0.9rem;
+        }
+
+        .locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Special sections */
+        .special-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .special-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            text-align: center;
+        }
+
+        .special-card h3 {
+            color: #fff;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .special-card p {
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .price {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 1rem 0;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e7ff;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .success-message {
+            color: #38a169;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .mobile-menu {
+                display: flex;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .sections-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .special-sections {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-buttons {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .section-card, .special-card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="#" class="logo">Mate</a>
+            
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#evaluare">Evaluare Națională</a></li>
+                <li><a href="#bacalaureat">Bacalaureat</a></li>
+                <li><a href="#clase">Clase</a></li>
+            </ul>
+
+            <div class="auth-buttons" id="authButtons">
+                <button class="btn btn-secondary" onclick="openModal('loginModal')">
+                    <i class="fas fa-sign-in-alt"></i> Conectare
+                </button>
+                <button class="btn btn-primary" onclick="openModal('registerModal')">
+                    <i class="fas fa-user-plus"></i> Înregistrare Gratuită
+                </button>
+            </div>
+
+            <div class="user-info" id="userInfo">
+                <span id="userName">Utilizator</span>
+                <span id="userPremium" class="premium-badge" style="display: none;">PREMIUM</span>
+                <button class="btn btn-secondary" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Deconectare
+                </button>
+            </div>
+
+            <div class="mobile-menu" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <section class="hero fade-in">
+            <h1>Învață Matematica cu ușurință</h1>
+            <p id="heroMessage">Alătură-te comunității noastre pentru a excela la matematică!</p>
+        </section>
+
+        <!-- Evaluare Națională și Bacalaureat -->
+        <div class="sections-grid fade-in">
+            <div class="section-card" id="evaluare">
+                <h3><i class="fas fa-graduation-cap"></i> Evaluare Națională</h3>
+                <p>Pregătire pentru examenul de evaluare națională</p>
+                <div class="subsections">
+                    <a href="en/en-lectii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-book"></i> Lecții 
+                    </a>
+                    <a href="en/en-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-pencil-alt"></i> Exerciții pe Capitole 
+                    </a>
+                    <a href="en/en-teste-interactive.html" class="subsection-btn" data-requires-auth="true">
+                        <i class="fas fa-clipboard-check"></i> Teste Interactive
+                    </a>
+                    <a href="en/en-teste-PDF.html" class="subsection-btn" data-requires-premium="true">
+                        <i class="fas fa-clipboard-check"></i> Teste de Antrenament PDF
+                        <i class="fas fa-crown premium-lock"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-card" id="bacalaureat">
+                <h3><i class="fas fa-university"></i> Bacalaureat</h3>
+                <p>Pregătire pentru examenul de bacalaureat</p>
+                <div class="subsections">
+                    <a href="bac/bac-lectii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-book"></i> Lecții
+                    </a>
+                    <a href="bac/bac-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-pencil-alt"></i> Exerciții pe Capitole
+                    </a>
+                    <a href="bac/bac-teste-interactive.html" class="subsection-btn" data-requires-auth="true">
+                        <i class="fas fa-clipboard-check"></i> Teste Interactive
+                    </a>
+                    <a href="bac/bac-teste-PDF.html" class="subsection-btn" data-requires-premium="true">
+                        <i class="fas fa-clipboard-check"></i> Teste de Antrenament PDF
+                        <i class="fas fa-crown premium-lock"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clase 5-12 -->
+        <div class="sections-grid fade-in" id="clase">
+            <div class="section-card">
+                <h3><i class="fas fa-child"></i> Clasa a 5-a</h3>
+                <div class="subsections">
+                    <a href="5/5-lectii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-book"></i> Lecții 
+                    </a>
+                    <a href="5/5-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-pencil-alt"></i> Exerciții 
+                    </a>
+                    <a href="5/5-teste.html" class="subsection-btn" data-requires-premium="true">
+                        <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-crown premium-lock"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3><i class="fas fa-child"></i> Clasa a 6-a</h3>
+                <div class="subsections">
+                    <a href="6/6-lectii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-book"></i> Lecții 
+                    </a>
+                    <a href="6/6-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-pencil-alt"></i> Exerciții
+                    </a>
+                    <a href="6/6-teste.html" class="subsection-btn" data-requires-premium="true">
+                        <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-crown premium-lock"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3><i class="fas fa-user-graduate"></i> Clasa a 7-a</h3>
+                <div class="subsections">
+                    <a href="7/7-lectii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-book"></i> Lecții
+                    </a>
+                    <a href="7/7-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-pencil-alt"></i> Exerciții
+                    </a>
+                    <a href="7/7-teste.html" class="subsection-btn" data-requires-premium="true">
+                        <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-crown premium-lock"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3><i class="fas fa-user-graduate"></i> Clasa a 8-a</h3>
+                <div class="subsections">
+                    <a href="8/8-lectii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-book"></i> Lecții
+                    </a>
+                    <a href="8/8-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                        <i class="fas fa-pencil-alt"></i> Exerciții
+                    </a>
+                    <a href="8/8-teste.html" class="subsection-btn" data-requires-premium="true">
+                        <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-crown premium-lock"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Servicii Premium -->
+        <div class="special-sections fade-in">
+            <div class="special-card">
+                <h3><i class="fas fa-chalkboard-teacher"></i> Lecții și exerciții Premium</h3>
+                <p>Acces la mai multe lecții și exerciții interactive</p>
+                <div class="price">49 RON/lună</div>
+                <button class="btn btn-primary" onclick="subscribePremium()" id="premiumBtn">
+                    <i class="fas fa-crown"></i> Abonează-te Premium
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2><i class="fas fa-sign-in-alt"></i> Conectare</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email:</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Parola:</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <div id="loginError" class="error-message" style="display: none;"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="loginSubmitBtn">
+                    <i class="fas fa-sign-in-alt"></i> Conectează-te
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('registerModal')">&times;</span>
+            <h2><i class="fas fa-user-plus"></i> Înregistrare Gratuită</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="registerName">Nume complet:</label>
+                    <input type="text" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email:</label>
+                    <input type="email" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Parola:</label>
+                    <input type="password" id="registerPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="registerClass">Clasa:</label>
+                    <select id="registerClass" required>
+                        <option value="">Selectează clasa</option>
+                        <option value="5">Clasa a 5-a</option>
+                        <option value="6">Clasa a 6-a</option>
+                        <option value="7">Clasa a 7-a</option>
+                        <option value="8">Clasa a 8-a</option>
+                        <option value="9">Clasa a 9-a</option>
+                        <option value="10">Clasa a 10-a</option>
+                        <option value="11">Clasa a 11-a</option>
+                        <option value="12">Clasa a 12-a</option>
+                    </select>
+                </div>
+                <div id="registerError" class="error-message" style="display: none;"></div>
+                <div id="registerSuccess" class="success-message" style="display: none;"></div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;" id="registerSubmitBtn">
+                    <i class="fas fa-user-plus"></i> Înregistrează-te Gratuit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Premium Modal -->
+    <div id="premiumModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('premiumModal')">&times;</span>
+            <h2><i class="fas fa-crown"></i> Abonament Premium</h2>
+            <div class="premium-info">
+                <h3>Beneficiile Premium:</h3>
+                <ul style="margin: 1rem 0; padding-left: 2rem;">
+                    <li>Acces la toate testele PDF</li>
+                    <li>Teste interactive avansate</li>
+                    <li>Progres urmărit detaliat</li>
+                    <li>Suport prioritar</li>
+                </ul>
+                <div class="price" style="text-align: center;">49 RON/lună</div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="processPremiumSubscription()">
+                    <i class="fas fa-credit-card"></i> Activează Premium
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Mate - Platformă de Matematică. Toate drepturile rezervate.</p>
+            <p>Dezvoltat cu ❤️ pentru educația românească</p>
+        </div>
+    </footer>
+
+    <script>
+        // Configurația Supabase - ÎNLOCUIEȘTE cu datele tale reale
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // Inițializarea Supabase
+        let supabase;
+        if (typeof window !== 'undefined' && window.supabase) {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // Starea aplicației
+        let currentUser = null;
+        let userProfile = null;
+        let userSubscription = null;
+
+        // Inițializarea aplicației
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthState();
+            setupEventListeners();
+            setupAccessControl();
+        });
+
+        // Verificarea stării de autentificare
+        async function checkAuthState() {
+            if (!supabase) {
+                console.warn('Supabase nu este configurată corect');
+                return;
+            }
+
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    await handleUserLogin(session.user);
+                }
+            } catch (error) {
+                console.error('Eroare la verificarea sesiunii:', error);
+            }
+        }
+
+        // Gestionarea login-ului utilizatorului
+        async function handleUserLogin(user) {
+            currentUser = user;
+            
+            try {
+                // Obține profilul utilizatorului
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profileError) throw profileError;
+                userProfile = profile;
+
+                // Obține abonamentul activ
+                const { data: subscription, error: subError } = await supabase
+                    .from('subscriptions')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('status', 'active')
+                    .single();
+
+                if (!subError) {
+                    userSubscription = subscription;
+                }
+
+                updateUI();
+            } catch (error) {
+                console.error('Eroare la încărcarea profilului:', error);
+            }
+        }
+
+        // Actualizarea interfeței utilizator
+        function updateUI() {
+            const authButtons = document.getElementById('authButtons');
+            const userInfo = document.getElementById('userInfo');
+            const userName = document.getElementById('userName');
+            const userPremium = document.getElementById('userPremium');
+            const heroMessage = document.getElementById('heroMessage');
+            const premiumBtn = document.getElementById('premiumBtn');
+
+            if (currentUser && userProfile) {
+                authButtons.style.display = 'none';
+                userInfo.classList.add('show');
+                userName.textContent = userProfile.full_name || 'Utilizator';
+                
+                if (userSubscription) {
+                    userPremium.style.display = 'inline-block';
+                    heroMessage.textContent = `Bun venit înapoi, ${userProfile.full_name}! Ai acces Premium.`;
+                    premiumBtn.innerHTML = '<i class="fas fa-check"></i> Premium Activ';
+                    premiumBtn.disabled = true;
+                } else {
+                    userPremium.style.display = 'none';
+                    heroMessage.textContent = `Bun venit înapoi, ${userProfile.full_name}!`;
+                }
+            } else {
+                authButtons.style.display = 'flex';
+                userInfo.classList.remove('show');
+            }
+
+            // Actualizează controalele de acces
+            updateAccessControls();
+        }
+
+        // Controlul accesului la conținut
+        function updateAccessControls() {
+            const subsectionBtns = document.querySelectorAll('.subsection-btn');
+            
+            subsectionBtns.forEach(btn => {
+                const requiresAuth = btn.dataset.requiresAuth === 'true';
+                const requiresPremium = btn.dataset.requiresPremium === 'true';
+                
+                if (requiresPremium && !userSubscription) {
+                    btn.classList.add('locked');
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        if (!currentUser) {
+                            openModal('loginModal');
+                        } else {
+                            openModal('premiumModal');
+                        }
+                    };
+                } else if (requiresAuth && !currentUser) {
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        openModal('loginModal');
+                    };
+                } else {
+                    btn.classList.remove('locked');
+                    btn.onclick = null;
+                }
+            });
+        }
+
+        // Configurarea event listeners
+        function setupEventListeners() {
+            // Formularul de login
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Formularul de înregistrare
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+
+            // Listener pentru schimbări în autentificare
+            if (supabase) {
+                supabase.auth.onAuthStateChange((event, session) => {
+                    if (event === 'SIGNED_IN' && session?.user) {
+                        handleUserLogin(session.user);
+                    } else if (event === 'SIGNED_OUT') {
+                        handleUserLogout();
+                    }
+                });
+            }
+        }
+
+        // Configurarea inițială a controalelor de acces
+        function setupAccessControl() {
+            updateAccessControls();
+        }
+
+        // Gestionarea login-ului
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            if (!supabase) {
+                showError('loginError', 'Serviciul nu este disponibil momentan');
+                return;
+            }
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const submitBtn = document.getElementById('loginSubmitBtn');
+
+            // Afișează loading
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se conectează...';
+            submitBtn.disabled = true;
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                // Login-ul reușit - sesiunea va fi gestionată automat
+                closeModal('loginModal');
+                document.getElementById('loginForm').reset();
+                hideError('loginError');
+
+            } catch (error) {
+                console.error('Eroare la login:', error);
+                showError('loginError', getErrorMessage(error));
+            } finally {
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Conectează-te';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Gestionarea înregistrării
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            if (!supabase) {
+                showError('registerError', 'Serviciul nu este disponibil momentan');
+                return;
+            }
+
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const className = document.getElementById('registerClass').value;
+            const submitBtn = document.getElementById('registerSubmitBtn');
+
+            // Validare
+            if (password.length < 6) {
+                showError('registerError', 'Parola trebuie să aibă cel puțin 6 caractere');
+                return;
+            }
+
+            // Afișează loading
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se înregistrează...';
+            submitBtn.disabled = true;
+
+            try {
+                // Înregistrează utilizatorul în Auth
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            full_name: name,
+                            class: className
+                        }
+                    }
+                });
+
+                if (authError) throw authError;
+
+                if (authData.user && !authData.session) {
+                    // Utilizatorul trebuie să confirme email-ul
+                    showSuccess('registerSuccess', 'Verifică-ți email-ul pentru a confirma contul!');
+                    setTimeout(() => {
+                        closeModal('registerModal');
+                        document.getElementById('registerForm').reset();
+                        hideSuccess('registerSuccess');
+                    }, 3000);
+                } else if (authData.session) {
+                    // Înregistrarea reușită și utilizatorul este logat automat
+                    closeModal('registerModal');
+                    document.getElementById('registerForm').reset();
+                    hideError('registerError');
+                }
+
+            } catch (error) {
+                console.error('Eroare la înregistrare:', error);
+                showError('registerError', getErrorMessage(error));
+            } finally {
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Înregistrează-te Gratuit';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Deconectarea utilizatorului
+        async function logout() {
+            if (!supabase) return;
+
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+            } catch (error) {
+                console.error('Eroare la deconectare:', error);
+            }
+        }
+
+        // Gestionarea logout-ului
+        function handleUserLogout() {
+            currentUser = null;
+            userProfile = null;
+            userSubscription = null;
+            updateUI();
+        }
+
+        // Abonarea Premium
+        async function subscribePremium() {
+            if (!currentUser) {
+                openModal('loginModal');
+                return;
+            }
+
+            if (userSubscription) {
+                alert('Ai deja un abonament Premium activ!');
+                return;
+            }
+
+            openModal('premiumModal');
+        }
+
+        // Procesarea abonamentului Premium
+        async function processPremiumSubscription() {
+            if (!supabase || !currentUser) return;
+
+            try {
+                // Creează abonamentul
+                const { data: subscription, error: subError } = await supabase
+                    .from('subscriptions')
+                    .insert([{
+                        user_id: currentUser.id,
+                        plan_name: 'premium',
+                        status: 'active',
+                        start_date: new Date().toISOString(),
+                        end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 zile
+                        auto_renew: true
+                    }])
+                    .select()
+                    .single();
+
+                if (subError) throw subError;
+
+                // Creează plata
+                const { data: payment, error: payError } = await supabase
+                    .from('payments')
+                    .insert([{
+                        user_id: currentUser.id,
+                        subscription_id: subscription.id,
+                        amount: 49,
+                        currency: 'RON',
+                        payment_method: 'demo',
+                        payment_status: 'paid',
+                        transaction_id: 'demo_' + Date.now(),
+                        paid_at: new Date().toISOString()
+                    }]);
+
+                if (payError) throw payError;
+
+                // Actualizează starea locală
+                userSubscription = subscription;
+                updateUI();
+                
+                closeModal('premiumModal');
+                alert('Abonamentul Premium a fost activat cu succes!');
+
+            } catch (error) {
+                console.error('Eroare la activarea Premium:', error);
+                alert('A apărut o eroare la activarea abonamentului Premium.');
+            }
+        }
+
+        // Funcții pentru progresul testelor
+        async function saveTestProgress(testId, score, totalQuestions, answeredQuestions, answers, durationSeconds) {
+            if (!supabase || !currentUser) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('test_progress')
+                    .upsert([{
+                        user_id: currentUser.id,
+                        test_id: testId,
+                        status: answeredQuestions === totalQuestions ? 'completed' : 'in_progress',
+                        score: score,
+                        total_questions: totalQuestions,
+                        answered_questions: answeredQuestions,
+                        answers: answers,
+                        duration_seconds: durationSeconds,
+                        last_updated: new Date().toISOString()
+                    }], { onConflict: 'user_id,test_id' });
+
+                if (error) throw error;
+                return data;
+            } catch (error) {
+                console.error('Eroare la salvarea progresului:', error);
+            }
+        }
+
+        // Încărcarea progresului testului
+        async function loadTestProgress(testId) {
+            if (!supabase || !currentUser) return null;
+
+            try {
+                const { data, error } = await supabase
+                    .from('test_progress')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .eq('test_id', testId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
+                return data;
+            } catch (error) {
+                console.error('Eroare la încărcarea progresului:', error);
+                return null;
+            }
+        }
+
+        // Funcții utilitare pentru modal
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Funcții pentru afișarea erorilor și mesajelor de succes
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.style.display = 'block';
+            }
+        }
+
+        function hideError(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = 'none';
+            }
+        }
+
+        function showSuccess(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.style.display = 'block';
+            }
+        }
+
+        function hideSuccess(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = 'none';
+            }
+        }
+
+        // Funcție pentru interpretarea erorilor
+        function getErrorMessage(error) {
+            switch (error.message) {
+                case 'Invalid login credentials':
+                    return 'Email sau parolă incorectă';
+                case 'User already registered':
+                    return 'Utilizatorul este deja înregistrat';
+                case 'Password should be at least 6 characters':
+                    return 'Parola trebuie să aibă cel puțin 6 caractere';
+                case 'Unable to validate email address: invalid format':
+                    return 'Format email invalid';
+                case 'Email not confirmed':
+                    return 'Email-ul nu a fost confirmat';
+                default:
+                    return error.message || 'A apărut o eroare neașteptată';
+            }
+        }
+
+        // Menu mobil
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+
+        // Închiderea modalelor la click pe fundal
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                const modalId = e.target.id;
+                closeModal(modalId);
+            }
+        });
+
+        // Funcții de export pentru folosirea în alte scripturi
+        window.MathPlatform = {
+            getCurrentUser: () => currentUser,
+            getUserProfile: () => userProfile,
+            getUserSubscription: () => userSubscription,
+            saveTestProgress: saveTestProgress,
+            loadTestProgress: loadTestProgress,
+            hasAccess: (type) => {
+                if (type === 'premium') {
+                    return !!userSubscription;
+                }
+                if (type === 'auth') {
+                    return !!currentUser;
+                }
+                return true;
+            }
+        };
+
+        // Funcții pentru compatibilitate cu codul existent
+        function addNewPage(pageName) {
+            console.log('Navigare către:', pageName);
+            // Această funcție poate fi extinsă pentru tracking sau alte funcționalități
+        }
+    </script>
+</body>
+</html>
