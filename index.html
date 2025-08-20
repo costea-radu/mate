@@ -884,7 +884,7 @@
     }
 
     // Apelează edge function serverless pentru crearea sesiunii Stripe Checkout
-    const { data, error } = await fetch('/.netlify/functions/create-checkout-session', { 
+    const { data, error } = await fetch('https://<project-ref>.functions.supabase.co/create-checkout-session', { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
