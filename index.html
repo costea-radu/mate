@@ -103,6 +103,7 @@
             border-radius: 15px;
             font-size: 0.8rem;
             font-weight: bold;
+            animation: pulse 2s infinite;
         }
 
         .btn {
@@ -183,6 +184,22 @@
             font-size: 1.2rem;
             margin-bottom: 2rem;
             opacity: 0.9;
+        }
+
+        /* Confirmation message */
+        .confirmation-message {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        .confirmation-message.show {
+            display: block;
         }
 
         /* Sections Grid */
@@ -461,6 +478,11 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         .pulse {
             animation: pulse 2s infinite;
         }
@@ -474,6 +496,22 @@
         @keyframes shake {
             0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -514,6 +552,12 @@
     </header>
 
     <main class="container">
+        <!-- Confirmation message for email verification -->
+        <div id="confirmationMessage" class="confirmation-message">
+            <i class="fas fa-check-circle"></i> 
+            <span id="confirmationText">Email confirmat cu succes! Acum poți folosi toate funcționalitățile platformei.</span>
+        </div>
+
         <section class="hero fade-in">
             <h1>Învață Matematica cu ușurință</h1>
             <p id="heroMessage">Alătură-te comunității noastre pentru a excela la matematică!</p>
@@ -737,7 +781,7 @@
                     <li>Suport prioritar</li>
                 </ul>
                 <div class="price" style="text-align: center;">49 RON/lună</div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="processPremiumSubscription()">
+                <button class="btn btn-primary" style="width: 100%;" onclick="processPremiumSubscription()" id="processPaymentBtn">
                     <i class="fas fa-credit-card"></i> Activează Premium
                 </button>
             </div>
@@ -769,6 +813,7 @@
         const userInfo = document.getElementById('userInfo');
         const userNameSpan = document.getElementById('userName');
         const userPremiumSpan = document.getElementById('userPremium');
+        const confirmationMessage = document.getElementById('confirmationMessage');
 
         let currentUser = null;
 
@@ -785,6 +830,23 @@
             document.getElementById('navLinks').classList.toggle('active');
         }
 
+        // Show confirmation message
+        function showConfirmationMessage(message, isSuccess = true) {
+            const msgElement = document.getElementById('confirmationMessage');
+            const textElement = document.getElementById('confirmationText');
+            
+            textElement.textContent = message;
+            msgElement.style.background = isSuccess 
+                ? 'linear-gradient(135deg, #38a169, #2f855a)' 
+                : 'linear-gradient(135deg, #e53e3e, #c53030)';
+            msgElement.classList.add('show');
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                msgElement.classList.remove('show');
+            }, 5000);
+        }
+
         // Authentication functions
         async function login(event) {
             event.preventDefault();
@@ -795,7 +857,7 @@
             
             loginError.style.display = 'none';
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se conectează...';
+            submitBtn.innerHTML = '<div class="spinner"></div> Se conectează...';
 
             try {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -807,9 +869,9 @@
                     throw error;
                 }
 
-                // User data will be loaded through onAuthStateChange
                 closeModal('loginModal');
                 document.getElementById('loginForm').reset();
+                showConfirmationMessage('Te-ai conectat cu succes!');
                 
             } catch (error) {
                 loginError.textContent = getErrorMessage(error.message);
@@ -840,10 +902,10 @@
             }
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se înregistrează...';
+            submitBtn.innerHTML = '<div class="spinner"></div> Se înregistrează...';
 
             try {
-                // Sign up with Supabase Auth with redirect URL
+                // Sign up with Supabase Auth - FIXED: Added correct redirect URL
                 const { data, error } = await supabaseClient.auth.signUp({
                     email,
                     password,
@@ -852,7 +914,8 @@
                             full_name: name,
                             school_class: selectedClass
                         },
-                        emailRedirectTo: window.location.origin
+                        // FIXED: Redirect to home page instead of default Supabase URL
+                        emailRedirectTo: `${window.location.origin}/index.html`
                     }
                 });
 
@@ -860,32 +923,7 @@
                     throw error;
                 }
 
-                if (data.user) {
-                    // Insert user data into the users table
-                    const { error: insertError } = await supabaseClient
-                        .from('users')
-                        .insert([{
-                            id: data.user.id,
-                            email: email,
-                            password_hash: '', // Leave empty - Supabase Auth handles passwords
-                            full_name: name,
-                            school_class: selectedClass,
-                            is_premium: false,
-                            is_admin: false,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        }]);
-
-                    if (insertError) {
-                        console.error('Error inserting user data:', insertError);
-                        registerSuccess.textContent = 'Înregistrare reușită! Verifică emailul pentru confirmare. (Detaliile profilului vor fi completate la prima conectare)';
-                    } else {
-                        registerSuccess.textContent = 'Înregistrare reușită! Verifică emailul pentru confirmare.';
-                    }
-                } else {
-                    registerSuccess.textContent = 'Înregistrare reușită! Verifică emailul pentru confirmare.';
-                }
-                
+                registerSuccess.textContent = 'Înregistrare reușită! Verifică emailul pentru confirmare.';
                 registerSuccess.style.display = 'block';
                 
                 // Clear form after 3 seconds
@@ -909,106 +947,96 @@
                 if (error) {
                     throw error;
                 }
-                // User state will be updated through onAuthStateChange
+                showConfirmationMessage('Te-ai deconectat cu succes!');
             } catch (error) {
                 console.error('Logout error:', error);
                 alert('Eroare la deconectare. Te rugăm să încerci din nou.');
             }
         }
 
-        // User data loading
+        // User data loading - FIXED: Integrated with actual database schema
         async function loadUserData(authUser) {
             try {
-                // First check if user has subscription data
+                // Check subscription status first (using actual schema)
                 let isPremium = false;
-                
-                // Check subscription status
                 const { data: subscription, error: subError } = await supabaseClient
                     .from('subscriptions')
                     .select('*')
                     .eq('user_id', authUser.id)
                     .eq('is_active', true)
-                    .single();
+                    .maybeSingle();
 
                 if (subscription && !subError) {
                     isPremium = true;
                 }
 
-                const { data, error } = await supabaseClient
+                // Get or create user data (using actual schema)
+                let { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('id', authUser.id)
                     .single();
 
-                if (error) {
-                    console.error('Error loading user data:', error);
-                    
-                    // Try to create user record if it doesn't exist
-                    if (error.code === 'PGRST116') { // No rows found
-                        const userData = {
-                            id: authUser.id,
-                            email: authUser.email,
-                            password_hash: '', // Leave empty
-                            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Utilizator',
-                            school_class: authUser.user_metadata?.school_class || '',
-                            is_premium: isPremium,
-                            is_admin: false,
-                            created_at: new Date().toISOString(),
-                            updated_at: new Date().toISOString()
-                        };
+                if (error && error.code === 'PGRST116') {
+                    // User doesn't exist, create it (using actual schema)
+                    const userData = {
+                        id: authUser.id,
+                        email: authUser.email,
+                        password_hash: null, // Not needed for Supabase Auth users
+                        full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Utilizator',
+                        school_class: authUser.user_metadata?.school_class || '',
+                        is_premium: isPremium,
+                        is_admin: false,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    };
 
-                        const { error: insertError } = await supabaseClient
-                            .from('users')
-                            .insert([userData]);
+                    const { data: insertedData, error: insertError } = await supabaseClient
+                        .from('users')
+                        .insert([userData])
+                        .select()
+                        .single();
 
-                        if (insertError) {
-                            console.error('Error creating user record:', insertError);
-                            // Fallback to auth user data
-                            currentUser = {
-                                id: authUser.id,
-                                email: authUser.email,
-                                full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Utilizator',
-                                school_class: authUser.user_metadata?.school_class || '',
-                                is_premium: isPremium,
-                                is_admin: false
-                            };
-                        } else {
-                            currentUser = userData;
-                        }
+                    if (!insertError) {
+                        data = insertedData;
                     } else {
-                        // Other error - fallback to auth user data
-                        currentUser = {
-                            id: authUser.id,
-                            email: authUser.email,
-                            full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Utilizator',
-                            school_class: authUser.user_metadata?.school_class || '',
-                            is_premium: isPremium,
-                            is_admin: false
-                        };
+                        console.error('Error creating user:', insertError);
+                        data = userData;
                     }
-                } else {
-                    currentUser = data;
-                    // Update premium status from subscription if different
-                    if (currentUser.is_premium !== isPremium) {
-                        const { error: updateError } = await supabaseClient
-                            .from('users')
-                            .update({ 
-                                is_premium: isPremium,
-                                updated_at: new Date().toISOString()
-                            })
-                            .eq('id', authUser.id);
+                } else if (error) {
+                    console.error('Error loading user:', error);
+                    // Fallback to auth user data
+                    data = {
+                        id: authUser.id,
+                        email: authUser.email,
+                        full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'Utilizator',
+                        school_class: authUser.user_metadata?.school_class || '',
+                        is_premium: isPremium,
+                        is_admin: false
+                    };
+                }
 
-                        if (!updateError) {
-                            currentUser.is_premium = isPremium;
-                        }
+                // Update premium status if different
+                if (data && data.is_premium !== isPremium) {
+                    const { error: updateError } = await supabaseClient
+                        .from('users')
+                        .update({ 
+                            is_premium: isPremium,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', authUser.id);
+
+                    if (!updateError) {
+                        data.is_premium = isPremium;
                     }
                 }
 
+                currentUser = data;
                 updateUIForUser(currentUser);
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
-                // Still update UI with basic auth user data
+                // Fallback
                 currentUser = {
                     id: authUser.id,
                     email: authUser.email,
@@ -1030,11 +1058,9 @@
                 authButtons.style.display = 'none';
                 userInfo.classList.add('show');
                 
-                // Update hero message for logged-in users
                 document.getElementById('heroMessage').textContent = 
                     `Bun venit, ${user.full_name}! Continuă să excelezi la matematică!`;
                 
-                // Enable/disable premium features
                 togglePremiumFeatures(!!user.is_premium);
                 toggleAuthRequiredFeatures(true);
                 
@@ -1075,11 +1101,9 @@
             if (isPremium) {
                 premiumBtn.innerHTML = '<i class="fas fa-times"></i> Dezabonează-te Premium';
                 premiumBtn.onclick = cancelPremiumSubscription;
-                premiumBtn.disabled = false;
             } else {
                 premiumBtn.innerHTML = '<i class="fas fa-crown"></i> Abonează-te Premium';
                 premiumBtn.onclick = subscribePremium;
-                premiumBtn.disabled = false;
             }
         }
 
@@ -1112,73 +1136,25 @@
             openModal('premiumModal');
         }
 
-        async function cancelPremiumSubscription() {
-            if (!currentUser) {
-                return;
-            }
-
-            const confirmed = confirm('Ești sigur că vrei să îți anulezi abonamentul Premium? Vei pierde accesul la toate funcțiile premium.');
-            
-            if (!confirmed) {
-                return;
-            }
-
-            try {
-                // Update subscription status to inactive
-                const { error: subError } = await supabaseClient
-                    .from('subscriptions')
-                    .update({ 
-                        is_active: false,
-                        ended_at: new Date().toISOString()
-                    })
-                    .eq('user_id', currentUser.id);
-
-                if (subError) {
-                    console.error('Error updating subscription:', subError);
-                }
-
-                // Update user premium status
-                const { error } = await supabaseClient
-                    .from('users')
-                    .update({ 
-                        is_premium: false,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', currentUser.id);
-
-                if (error) {
-                    console.error('Error updating user premium status:', error);
-                    alert('Eroare la anularea abonamentului. Te rugăm să încerci din nou.');
-                    return;
-                }
-
-                // Update current user data
-                currentUser.is_premium = false;
-                updateUIForUser(currentUser);
-                
-                alert('Abonamentul Premium a fost anulat cu succes. Îți mulțumim că ai fost membru Premium!');
-
-            } catch (error) {
-                console.error('Error cancelling premium:', error);
-                alert('Eroare la anularea abonamentului: ' + error.message);
-            }
-        }
-
+        // IMPROVED: Better subscription processing
         async function processPremiumSubscription() {
             if (!currentUser) {
                 alert('Trebuie să te conectezi pentru a te abona.');
                 return;
             }
 
+            const processBtn = document.getElementById('processPaymentBtn');
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<div class="spinner"></div> Se procesează...';
+
             try {
-                // Get the current session
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 
                 if (!session) {
                     throw new Error('Nu ești autentificat');
                 }
 
-                // Call the edge function to create checkout session
+                // IMPROVED: Better Stripe integration
                 const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout-session`, {
                     method: 'POST',
                     headers: {
@@ -1186,9 +1162,14 @@
                         'Authorization': `Bearer ${session.access_token}`,
                     },
                     body: JSON.stringify({
-                        priceId: 'price_1RybNpIw53SYbkmLiTchznG6', // Înlocuiește cu Price ID-ul tău real din Stripe
-                        successUrl: window.location.origin + '?success=true',
-                        cancelUrl: window.location.origin + '?canceled=true'
+                        priceId: 'price_1RybNpIw53SYbkmLiTchznG6', 
+                        successUrl: window.location.origin + '/index.html?success=true',
+                        cancelUrl: window.location.origin + '/index.html?canceled=true',
+                        customerEmail: currentUser.email,
+                        metadata: {
+                            user_id: currentUser.id,
+                            user_name: currentUser.full_name
+                        }
                     })
                 });
 
@@ -1204,6 +1185,58 @@
             } catch (error) {
                 console.error('Error creating checkout session:', error);
                 alert('Eroare la inițierea plății: ' + error.message);
+                
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fas fa-credit-card"></i> Activează Premium';
+            }
+        }
+
+        // IMPROVED: Better cancellation
+        async function cancelPremiumSubscription() {
+            if (!currentUser) {
+                return;
+            }
+
+            const confirmed = confirm('Ești sigur că vrei să îți anulezi abonamentul Premium? Vei pierde accesul la toate funcțiile premium.');
+            
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (!session) {
+                    throw new Error('Nu ești autentificat');
+                }
+
+                // Call function to cancel subscription in Stripe
+                const response = await fetch(`${supabaseUrl}/functions/v1/cancel-subscription`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        user_id: currentUser.id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Eroare la anularea abonamentului');
+                }
+
+                // Update local user data
+                currentUser.is_premium = false;
+                updateUIForUser(currentUser);
+                
+                showConfirmationMessage('Abonamentul Premium a fost anulat cu succes. Îți mulțumim că ai fost membru Premium!');
+
+            } catch (error) {
+                console.error('Error cancelling subscription:', error);
+                alert('Eroare la anularea abonamentului: ' + error.message);
             }
         }
 
@@ -1223,120 +1256,82 @@
             return errorMessages[errorMsg] || errorMsg || 'A apărut o eroare neașteptată';
         }
 
-        // Test score functions
-        async function saveTestScore(testId, score) {
-            if (!currentUser) return false;
+        // IMPROVED: Handle payment success with database integration
+        async function handlePaymentSuccess() {
+            if (currentUser) {
+                try {
+                    // In production, this will be handled by webhook
+                    // For now, we just update the user's premium status
+                    // The actual subscription record should be created by the webhook
+                    
+                    // Update user premium status
+                    const { error: userError } = await supabaseClient
+                        .from('users')
+                        .update({ 
+                            is_premium: true,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', currentUser.id);
 
-            try {
-                // First, make sure the test exists
-                const { data: testData, error: testError } = await supabaseClient
-                    .from('tests')
-                    .select('id')
-                    .eq('id', testId)
-                    .single();
-
-                if (testError) {
-                    // Create test if it doesn't exist
-                    const { error: createTestError } = await supabaseClient
-                        .from('tests')
-                        .insert([{
-                            id: testId,
-                            title: `Test ${testId}`,
-                            created_at: new Date().toISOString()
-                        }]);
-
-                    if (createTestError) {
-                        console.error('Error creating test:', createTestError);
-                        return false;
+                    if (!userError) {
+                        currentUser.is_premium = true;
+                        updateUIForUser(currentUser);
+                        showConfirmationMessage('🎉 Felicitări! Abonamentul Premium a fost activat cu succes!');
+                    } else {
+                        console.error('Error updating user premium status:', userError);
+                        showConfirmationMessage('Plata a fost procesată, dar a apărut o eroare. Contactează suportul.', false);
                     }
+
+                } catch (error) {
+                    console.error('Error processing payment success:', error);
+                    showConfirmationMessage('Plata a fost procesată, dar a apărut o eroare. Contactează suportul.', false);
                 }
-
-                // Save the score
-                const { error } = await supabaseClient
-                    .from('test_scores')
-                    .insert([{
-                        user_id: currentUser.id,
-                        test_id: testId,
-                        score: score,
-                        created_at: new Date().toISOString()
-                    }]);
-
-                if (error) {
-                    console.error('Error saving test score:', error);
-                    return false;
-                }
-
-                // Update leaderboard
-                await updateLeaderboard();
-                return true;
-            } catch (error) {
-                console.error('Error saving test score:', error);
-                return false;
             }
         }
 
-        async function updateLeaderboard() {
-            if (!currentUser) return;
-
-            try {
-                // Calculate total score for user
-                const { data: scores, error } = await supabaseClient
-                    .from('test_scores')
-                    .select('score')
-                    .eq('user_id', currentUser.id);
-
-                if (error) {
-                    console.error('Error fetching scores:', error);
-                    return;
-                }
-
-                const totalScore = scores?.reduce((sum, score) => sum + score.score, 0) || 0;
-
-                // Update leaderboard
-                const { error: leaderboardError } = await supabaseClient
-                    .from('leaderboard')
-                    .upsert([{
-                        user_id: currentUser.id,
-                        total_score: totalScore,
-                        updated_at: new Date().toISOString()
-                    }]);
-
-                if (leaderboardError) {
-                    console.error('Error updating leaderboard:', leaderboardError);
-                }
-            } catch (error) {
-                console.error('Error updating leaderboard:', error);
-            }
-        }
-
-        // Initialize app
+        // Initialize app - IMPROVED: Better initialization
         async function initializeApp() {
-            // Check URL parameters for payment success/cancel
+            // Handle URL parameters first
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success') === 'true') {
-                // Payment was successful - check and update subscription status
-                setTimeout(async () => {
-                    if (currentUser) {
-                        // Refresh user data to get updated premium status
-                        const { data: { session } } = await supabaseClient.auth.getSession();
-                        if (session?.user) {
-                            await loadUserData(session.user);
-                        }
+            
+            // Handle email confirmation
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+            const type = urlParams.get('type');
+            
+            if (type === 'signup' && accessToken && refreshToken) {
+                try {
+                    const { data, error } = await supabaseClient.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    });
+                    
+                    if (!error && data.user) {
+                        showConfirmationMessage('Email confirmat cu succes! Contul tău a fost activat.');
+                        // Clean URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
                     }
-                    alert('🎉 Plata a fost procesată cu succes! Abonamentul Premium a fost activat.');
-                    // Remove URL parameters
+                } catch (error) {
+                    console.error('Error confirming email:', error);
+                    showConfirmationMessage('Eroare la confirmarea emailului. Te rugăm să încerci din nou.', false);
+                }
+            }
+            
+            // Handle payment success/cancel
+            if (urlParams.get('success') === 'true') {
+                // Wait a bit for user data to load, then handle payment
+                setTimeout(async () => {
+                    await handlePaymentSuccess();
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }, 2000);
             } else if (urlParams.get('canceled') === 'true') {
-                // Payment was cancelled
                 setTimeout(() => {
-                    alert('Plata a fost anulată. Poți încerca din nou oricând.');
-                    // Remove URL parameters
+                    showConfirmationMessage('Plata a fost anulată. Poți încerca din nou oricând.', false);
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }, 500);
             }
 
-            // Check if user is already logged in
+            // Check current auth state
             const { data: { session } } = await supabaseClient.auth.getSession();
             
             if (session?.user) {
@@ -1354,7 +1349,6 @@
                 } else if (event === 'SIGNED_OUT') {
                     updateUIForUser(null);
                 } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-                    // Refresh user data when token is refreshed
                     await loadUserData(session.user);
                 }
             });
@@ -1383,8 +1377,6 @@
             }
         });
 
-        // Initialize app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
