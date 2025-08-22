@@ -911,7 +911,7 @@
                             full_name: name,
                             school_class: selectedClass
                         },
-                        emailRedirectTo: `${window.location.origin}/index.html`
+                        emailRedirectTo: `${window.location.origin}/mate`
                     }
                 });
 
@@ -1248,8 +1248,8 @@
                     },
                     body: JSON.stringify({
                         priceId: 'price_1RybNpIw53SYbkmLiTchznG6', // Înlocuiește cu Price ID-ul tău real din Stripe
-                        successUrl: `${window.location.origin}/index.html?success=true`,
-                        cancelUrl: `${window.location.origin}/index.html?canceled=true`
+                        successUrl: `${window.location.origin}/mate?success=true`,
+                        cancelUrl: `${window.location.origin}/mate?canceled=true`
                     })
                 });
 
