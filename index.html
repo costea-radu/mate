@@ -803,7 +803,8 @@
     </footer>
 
     <script>
-       // Înlocuiește partea JavaScript din index.html cu această versiune corectată
+       // Enhanced JavaScript with better premium handling
+// Replace the existing JavaScript section in your index.html with this
 
 // Initialize Supabase client
 const supabaseUrl = 'https://hlqeihdziofhqagwezvn.supabase.co';
@@ -852,7 +853,7 @@ function toggleMobileMenu() {
     document.getElementById('navLinks').classList.toggle('active');
 }
 
-// Enhanced user data loading with improved premium status checking
+// ENHANCED: Better user data loading with improved premium status checking
 async function loadUserData(authUser) {
     try {
         console.log('Loading user data for:', authUser.email);
@@ -885,7 +886,7 @@ async function loadUserData(authUser) {
 
             if (insertError) {
                 console.error('Error creating user record:', insertError);
-                currentUser = newUserData; // Use fallback data
+                currentUser = newUserData;
             } else {
                 currentUser = newUserData;
             }
@@ -904,7 +905,7 @@ async function loadUserData(authUser) {
             currentUser = userData;
         }
 
-        // Always check for active subscription to determine real premium status
+        // CRITICAL: Always check for active subscription to determine real premium status
         console.log('Checking for active subscription...');
         const { data: subscription, error: subError } = await supabaseClient
             .from('subscriptions')
@@ -915,27 +916,41 @@ async function loadUserData(authUser) {
 
         const hasActiveSubscription = subscription && !subError;
         console.log('Active subscription found:', hasActiveSubscription);
+        
+        if (subscription) {
+            console.log('Subscription details:', {
+                id: subscription.id,
+                stripe_subscription_id: subscription.stripe_subscription_id,
+                is_active: subscription.is_active,
+                started_at: subscription.started_at,
+                ended_at: subscription.ended_at
+            });
+        }
 
-        // If premium status differs from database, force update
+        // FIXED: If premium status differs from database, sync it
         if (currentUser.is_premium !== hasActiveSubscription) {
-            console.log(`Syncing premium status: DB=${currentUser.is_premium} -> Actual=${hasActiveSubscription}`);
+            console.log(`Premium status mismatch - DB: ${currentUser.is_premium}, Subscription: ${hasActiveSubscription}`);
             
-            const { data: updatedUser, error: updateError } = await supabaseClient
-                .from('users')
-                .update({ 
-                    is_premium: hasActiveSubscription,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', authUser.id)
-                .select()
-                .single();
+            try {
+                const { data: updatedUser, error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({ 
+                        is_premium: hasActiveSubscription,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', authUser.id)
+                    .select()
+                    .single();
 
-            if (!updateError && updatedUser) {
-                currentUser = updatedUser;
-                console.log('Premium status synced successfully');
-            } else {
-                console.error('Error syncing premium status:', updateError);
-                // Use the real subscription status anyway
+                if (!updateError && updatedUser) {
+                    currentUser = updatedUser;
+                    console.log('Premium status synced successfully');
+                } else {
+                    console.error('Error syncing premium status:', updateError);
+                    currentUser.is_premium = hasActiveSubscription;
+                }
+            } catch (syncError) {
+                console.error('Sync error:', syncError);
                 currentUser.is_premium = hasActiveSubscription;
             }
         }
@@ -947,7 +962,6 @@ async function loadUserData(authUser) {
         
     } catch (error) {
         console.error('Error in loadUserData:', error);
-        // Still update UI with basic auth user data
         currentUser = {
             id: authUser.id,
             email: authUser.email,
@@ -968,7 +982,7 @@ function updateUIForUser(user) {
     if (user) {
         userNameSpan.textContent = user.full_name || 'Utilizator';
         
-        // Show/hide premium badge with better styling
+        // Show/hide premium badge
         if (user.is_premium) {
             userPremiumSpan.style.display = 'inline-block';
             userPremiumSpan.textContent = 'PREMIUM';
@@ -1015,7 +1029,6 @@ function togglePremiumFeatures(isPremium) {
             el.classList.remove('locked');
             el.removeAttribute('title');
             el.onclick = null;
-            // Remove premium lock icon
             const lockIcon = el.querySelector('.premium-lock');
             if (lockIcon) {
                 lockIcon.style.display = 'none';
@@ -1033,7 +1046,6 @@ function togglePremiumFeatures(isPremium) {
                 }
                 return false;
             };
-            // Show premium lock icon
             const lockIcon = el.querySelector('.premium-lock');
             if (lockIcon) {
                 lockIcon.style.display = 'inline';
@@ -1075,7 +1087,7 @@ function toggleAuthRequiredFeatures(isAuthenticated) {
     });
 }
 
-// Authentication functions (păstrează funcțiile existente pentru login/register/logout)
+// Authentication functions
 async function login(event) {
     event.preventDefault();
     const email = document.getElementById('loginEmail').value;
@@ -1140,8 +1152,7 @@ async function register(event) {
                 data: {
                     full_name: name,
                     school_class: selectedClass
-                },
-                emailRedirectTo: `${window.location.origin}/mate`
+                }
             }
         });
 
@@ -1267,10 +1278,17 @@ async function cancelPremiumSubscription() {
     }
 }
 
-// Enhanced premium subscription processing
+// ENHANCED: Premium subscription processing with better error handling
 async function processPremiumSubscription() {
     if (!currentUser) {
         showAlert('Trebuie sa te conectezi pentru a te abona.', 'warning');
+        return;
+    }
+
+    // Double-check if user already has premium
+    if (currentUser.is_premium) {
+        showAlert('Ai deja un abonament Premium activ!', 'info');
+        closeModal('premiumModal');
         return;
     }
 
@@ -1292,7 +1310,7 @@ async function processPremiumSubscription() {
         console.log('Session valid, creating checkout...');
 
         const checkoutData = {
-            priceId: 'price_1RybNpIw53SYbkmLiTchznG6', // Înlocuiește cu Price ID-ul tău real
+            priceId: 'price_1RybNpIw53SYbkmLiTchznG6', // Replace with your actual Price ID
             successUrl: `${window.location.origin}${window.location.pathname}?success=true`,
             cancelUrl: `${window.location.origin}${window.location.pathname}?canceled=true`
         };
@@ -1334,6 +1352,7 @@ async function processPremiumSubscription() {
         closeModal('premiumModal');
         showAlert('Redirectionare catre pagina de plata...', 'info');
 
+        // Small delay before redirect
         setTimeout(() => {
             window.location.href = data.url;
         }, 1000);
@@ -1354,12 +1373,13 @@ async function processPremiumSubscription() {
         }
         
         showAlert(errorMessage, 'warning');
+    } finally {
         processingBtn.disabled = false;
         processingBtn.innerHTML = originalText;
     }
 }
 
-// Enhanced Stripe success handling
+// ENHANCED: Better Stripe success handling with multiple verification attempts
 async function handleStripeSuccess() {
     console.log('Handling Stripe payment success...');
     
@@ -1373,23 +1393,23 @@ async function handleStripeSuccess() {
     showAlert('Se verifica statusul platii...', 'info');
 
     try {
-        // Enhanced subscription checking with multiple attempts
         let attempts = 0;
-        const maxAttempts = 20; // Try for 20 seconds
+        const maxAttempts = 30; // Try for 30 seconds
         
         const checkSubscription = async () => {
             attempts++;
             console.log(`Checking subscription attempt ${attempts}/${maxAttempts}`);
             
             try {
-                const { data: subscription, error } = await supabaseClient
+                // Check subscription table
+                const { data: subscription, error: subError } = await supabaseClient
                     .from('subscriptions')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .eq('is_active', true)
                     .single();
 
-                if (subscription && !error) {
+                if (subscription && !subError) {
                     console.log('Active subscription found:', subscription);
                     
                     // Force refresh user data
@@ -1398,7 +1418,13 @@ async function handleStripeSuccess() {
                         await loadUserData(user);
                     }
                     
-                    showAlert('Felicitari! Abonamentul Premium a fost activat cu succes!', 'success');
+                    showAlert('Felicitari! Abonamentul Premium a fost activat cu succes! Pagina se va reincarca in 3 secunde...', 'success');
+                    
+                    // Reload page after 3 seconds to ensure all UI updates
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                    
                     return true;
                 }
 
@@ -1408,15 +1434,16 @@ async function handleStripeSuccess() {
                     setTimeout(checkSubscription, 1000);
                 } else {
                     console.log('No subscription found after maximum attempts');
-                    showAlert('Plata a fost procesata cu succes! Abonamentul Premium va fi activat in cateva minute. Daca nu se activeaza, te rugam sa ne contactezi.', 'success');
+                    showAlert('Plata a fost procesata cu succes! Abonamentul Premium se activeaza... Te rugam sa anotezi pagina in 1-2 minute daca nu se activeaza automat.', 'success');
                     
-                    // Force refresh user data in 30 seconds
+                    // Force refresh user data after 30 seconds
                     setTimeout(async () => {
                         const { data: { user } } = await supabaseClient.auth.getUser();
                         if (user) {
                             await loadUserData(user);
                             if (currentUser && currentUser.is_premium) {
                                 showAlert('Abonamentul Premium a fost activat!', 'success');
+                                setTimeout(() => window.location.reload(), 2000);
                             }
                         }
                     }, 30000);
@@ -1427,17 +1454,17 @@ async function handleStripeSuccess() {
                 if (attempts < maxAttempts) {
                     setTimeout(checkSubscription, 1000);
                 } else {
-                    showAlert('Plata a fost procesata, dar nu am putut verifica imediat statusul abonamentului. Te rugam sa reimprospantezi pagina in cateva minute.', 'info');
+                    showAlert('Plata a fost procesata, dar verificarea abonamentului intarzie. Te rugam sa reincarcii pagina in cateva minute.', 'info');
                 }
             }
         };
 
-        // Start checking
+        // Start checking immediately
         await checkSubscription();
 
     } catch (error) {
         console.error('Error handling Stripe success:', error);
-        showAlert('Plata a fost procesata, dar a aparut o eroare la verificare. Abonamentul va fi activat in curand. Daca nu se activeaza, te rugam sa ne contactezi.', 'warning');
+        showAlert('Plata a fost procesata cu succes! Abonamentul va fi activat in curand. Daca nu se activeaza in cateva minute, te rugam sa ne contactezi.', 'success');
     }
 }
 
@@ -1457,7 +1484,7 @@ function getErrorMessage(errorMsg) {
     return errorMessages[errorMsg] || errorMsg || 'A aparut o eroare neasteptata';
 }
 
-// Enhanced initialization
+// ENHANCED: Better initialization with URL parameter handling
 async function initializeApp() {
     console.log('Initializing app...');
     
@@ -1480,12 +1507,12 @@ async function initializeApp() {
             
             if (currentUser) {
                 console.log('User loaded, handling success');
-                handleStripeSuccess();
+                await handleStripeSuccess();
             } else if (userCheckAttempts < maxUserCheckAttempts) {
                 setTimeout(waitForUserAndHandle, 500);
             } else {
                 console.log('User not loaded after maximum attempts, trying anyway');
-                handleStripeSuccess();
+                await handleStripeSuccess();
             }
         };
         
@@ -1514,7 +1541,7 @@ async function initializeApp() {
         updateUIForUser(null);
     }
 
-    // Listen for auth changes with better error handling
+    // Listen for auth changes
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email || 'no user');
         
@@ -1524,6 +1551,7 @@ async function initializeApp() {
             } else if (event === 'SIGNED_OUT') {
                 updateUIForUser(null);
             } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                // Refresh user data when token is refreshed
                 await loadUserData(session.user);
             }
         } catch (error) {
@@ -1548,10 +1576,11 @@ window.addEventListener('click', (event) => {
 // Add visual feedback for locked features
 document.addEventListener('click', (e) => {
     if (e.target.closest('.locked')) {
-        e.target.closest('.locked').style.animation = 'shake 0.5s';
+        const lockedElement = e.target.closest('.locked');
+        lockedElement.style.animation = 'shake 0.5s';
         setTimeout(() => {
-            if (e.target.closest('.locked')) {
-                e.target.closest('.locked').style.animation = '';
+            if (lockedElement) {
+                lockedElement.style.animation = '';
             }
         }, 500);
     }
