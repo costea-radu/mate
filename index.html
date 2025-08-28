@@ -802,9 +802,7 @@
     </footer>
 
     <script>
-       // Înlocuiește partea JavaScript din index.html cu această versiune corectată
-
-// Initialize Supabase client
+      // Initialize Supabase client
 const supabaseUrl = 'https://hlqeihdziofhqagwezvn.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhscWVpaGR6aW9maHFhZ3dlenZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2MDkzNzMsImV4cCI6MjA3MTE4NTM3M30.rObj78cz5Raw0tPQX9dRmcsovSAxlO1F0p-FqrCfv3U';
 
@@ -820,7 +818,6 @@ let currentUser = null;
 
 // Enhanced alert system
 function showAlert(message, type = 'info') {
-    // Remove existing alerts
     const existingAlerts = document.querySelectorAll('.alert');
     existingAlerts.forEach(alert => alert.remove());
 
@@ -830,7 +827,6 @@ function showAlert(message, type = 'info') {
     
     document.body.appendChild(alert);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
         if (alert.parentNode) {
             alert.remove();
@@ -852,9 +848,9 @@ function toggleMobileMenu() {
 }
 
 // Enhanced user data loading with improved premium status checking
-async function loadUserData(authUser) {
+async function loadUserData(authUser, forceRefresh = false) {
     try {
-        console.log('Loading user data for:', authUser.email);
+        console.log('Loading user data for:', authUser.email, forceRefresh ? '(force refresh)' : '');
         
         // Get user data from users table
         const { data: userData, error: userError } = await supabaseClient
@@ -884,13 +880,12 @@ async function loadUserData(authUser) {
 
             if (insertError) {
                 console.error('Error creating user record:', insertError);
-                currentUser = newUserData; // Use fallback data
+                currentUser = newUserData;
             } else {
                 currentUser = newUserData;
             }
         } else if (userError) {
             console.error('Error loading user data:', userError);
-            // Fallback to auth user data
             currentUser = {
                 id: authUser.id,
                 email: authUser.email,
@@ -915,8 +910,8 @@ async function loadUserData(authUser) {
         const hasActiveSubscription = subscription && !subError;
         console.log('Active subscription found:', hasActiveSubscription);
 
-        // If premium status differs from database, force update
-        if (currentUser.is_premium !== hasActiveSubscription) {
+        // If premium status differs from database or force refresh, update it
+        if (currentUser.is_premium !== hasActiveSubscription || forceRefresh) {
             console.log(`Syncing premium status: DB=${currentUser.is_premium} -> Actual=${hasActiveSubscription}`);
             
             const { data: updatedUser, error: updateError } = await supabaseClient
@@ -934,7 +929,6 @@ async function loadUserData(authUser) {
                 console.log('Premium status synced successfully');
             } else {
                 console.error('Error syncing premium status:', updateError);
-                // Use the real subscription status anyway
                 currentUser.is_premium = hasActiveSubscription;
             }
         }
@@ -946,7 +940,6 @@ async function loadUserData(authUser) {
         
     } catch (error) {
         console.error('Error in loadUserData:', error);
-        // Still update UI with basic auth user data
         currentUser = {
             id: authUser.id,
             email: authUser.email,
@@ -960,121 +953,7 @@ async function loadUserData(authUser) {
     }
 }
 
-// Enhanced UI Updates with better premium handling
-function updateUIForUser(user) {
-    console.log('Updating UI for user:', user ? user.email : 'null', 'Premium:', user ? user.is_premium : 'N/A');
-    
-    if (user) {
-        userNameSpan.textContent = user.full_name || 'Utilizator';
-        
-        // Show/hide premium badge with better styling
-        if (user.is_premium) {
-            userPremiumSpan.style.display = 'inline-block';
-            userPremiumSpan.textContent = 'PREMIUM';
-            userPremiumSpan.title = 'Cont Premium activ';
-        } else {
-            userPremiumSpan.style.display = 'none';
-        }
-        
-        authButtons.style.display = 'none';
-        userInfo.classList.add('show');
-        
-        // Update hero message for logged-in users
-        const heroMessage = user.is_premium 
-            ? `Bun venit, ${user.full_name}! Ai acces Premium complet!`
-            : `Bun venit, ${user.full_name}! Continua sa excelezi la matematica!`;
-        
-        document.getElementById('heroMessage').textContent = heroMessage;
-        
-        // Enable/disable features
-        togglePremiumFeatures(!!user.is_premium);
-        toggleAuthRequiredFeatures(true);
-        
-    } else {
-        userNameSpan.textContent = '';
-        userPremiumSpan.style.display = 'none';
-        authButtons.style.display = 'flex';
-        userInfo.classList.remove('show');
-        
-        document.getElementById('heroMessage').textContent = 
-            'Alatura-te comunitatii noastre pentru a excela la matematica!';
-        
-        togglePremiumFeatures(false);
-        toggleAuthRequiredFeatures(false);
-        currentUser = null;
-    }
-}
-
-// Enhanced feature toggles with improved premium handling
-function togglePremiumFeatures(isPremium) {
-    console.log('Toggling premium features:', isPremium);
-    
-    document.querySelectorAll('[data-requires-premium]').forEach(el => {
-        if (isPremium) {
-            el.classList.remove('locked');
-            el.removeAttribute('title');
-            el.onclick = null;
-            // Remove premium lock icon
-            const lockIcon = el.querySelector('.premium-lock');
-            if (lockIcon) {
-                lockIcon.style.display = 'none';
-            }
-        } else {
-            el.classList.add('locked');
-            el.setAttribute('title', 'Aceasta functie este disponibila doar pentru utilizatorii Premium');
-            el.onclick = (e) => {
-                e.preventDefault();
-                if (!currentUser) {
-                    showAlert('Trebuie sa te conectezi pentru a accesa functiile premium.', 'warning');
-                    openModal('loginModal');
-                } else {
-                    openModal('premiumModal');
-                }
-                return false;
-            };
-            // Show premium lock icon
-            const lockIcon = el.querySelector('.premium-lock');
-            if (lockIcon) {
-                lockIcon.style.display = 'inline';
-            }
-        }
-    });
-    
-    // Update premium button
-    const premiumBtn = document.getElementById('premiumBtn');
-    if (premiumBtn) {
-        if (isPremium) {
-            premiumBtn.innerHTML = '<i class="fas fa-times"></i> Dezaboneaza-te Premium';
-            premiumBtn.className = 'btn btn-cancel';
-            premiumBtn.onclick = cancelPremiumSubscription;
-        } else {
-            premiumBtn.innerHTML = '<i class="fas fa-crown"></i> Aboneaza-te Premium';
-            premiumBtn.className = 'btn btn-premium';
-            premiumBtn.onclick = subscribePremium;
-        }
-        premiumBtn.disabled = false;
-    }
-}
-
-function toggleAuthRequiredFeatures(isAuthenticated) {
-    document.querySelectorAll('[data-requires-auth="true"]').forEach(el => {
-        if (isAuthenticated) {
-            el.classList.remove('locked');
-            el.removeAttribute('title');
-            el.onclick = null;
-        } else {
-            el.classList.add('locked');
-            el.setAttribute('title', 'Trebuie sa te conectezi pentru a accesa aceasta functie');
-            el.onclick = (e) => {
-                e.preventDefault();
-                openModal('loginModal');
-                return false;
-            };
-        }
-    });
-}
-
-// Authentication functions (păstrează funcțiile existente pentru login/register/logout)
+// Authentication functions
 async function login(event) {
     event.preventDefault();
     const email = document.getElementById('loginEmail').value;
@@ -1198,6 +1077,114 @@ async function logout() {
         showAlert('Eroare la deconectare. Te rugam sa incerci din nou.', 'warning');
     }
 }
+        // Enhanced UI Updates with better premium handling
+function updateUIForUser(user) {
+    console.log('Updating UI for user:', user ? user.email : 'null', 'Premium:', user ? user.is_premium : 'N/A');
+    
+    if (user) {
+        userNameSpan.textContent = user.full_name || 'Utilizator';
+        
+        if (user.is_premium) {
+            userPremiumSpan.style.display = 'inline-block';
+            userPremiumSpan.textContent = 'PREMIUM';
+            userPremiumSpan.title = 'Cont Premium activ';
+        } else {
+            userPremiumSpan.style.display = 'none';
+        }
+        
+        authButtons.style.display = 'none';
+        userInfo.classList.add('show');
+        
+        const heroMessage = user.is_premium 
+            ? `Bun venit, ${user.full_name}! Ai acces Premium complet!`
+            : `Bun venit, ${user.full_name}! Continua sa excelezi la matematica!`;
+        
+        document.getElementById('heroMessage').textContent = heroMessage;
+        
+        togglePremiumFeatures(!!user.is_premium);
+        toggleAuthRequiredFeatures(true);
+        
+    } else {
+        userNameSpan.textContent = '';
+        userPremiumSpan.style.display = 'none';
+        authButtons.style.display = 'flex';
+        userInfo.classList.remove('show');
+        
+        document.getElementById('heroMessage').textContent = 
+            'Alatura-te comunitatii noastre pentru a excela la matematica!';
+        
+        togglePremiumFeatures(false);
+        toggleAuthRequiredFeatures(false);
+        currentUser = null;
+    }
+}
+
+// Enhanced feature toggles with improved premium handling
+function togglePremiumFeatures(isPremium) {
+    console.log('Toggling premium features:', isPremium);
+    
+    document.querySelectorAll('[data-requires-premium]').forEach(el => {
+        if (isPremium) {
+            el.classList.remove('locked');
+            el.removeAttribute('title');
+            el.onclick = null;
+            const lockIcon = el.querySelector('.premium-lock');
+            if (lockIcon) {
+                lockIcon.style.display = 'none';
+            }
+        } else {
+            el.classList.add('locked');
+            el.setAttribute('title', 'Aceasta functie este disponibila doar pentru utilizatorii Premium');
+            el.onclick = (e) => {
+                e.preventDefault();
+                if (!currentUser) {
+                    showAlert('Trebuie sa te conectezi pentru a accesa functiile premium.', 'warning');
+                    openModal('loginModal');
+                } else {
+                    openModal('premiumModal');
+                }
+                return false;
+            };
+            const lockIcon = el.querySelector('.premium-lock');
+            if (lockIcon) {
+                lockIcon.style.display = 'inline';
+            }
+        }
+    });
+    
+    // Update premium button
+    const premiumBtn = document.getElementById('premiumBtn');
+    if (premiumBtn) {
+        if (isPremium) {
+            premiumBtn.innerHTML = '<i class="fas fa-times"></i> Dezaboneaza-te Premium';
+            premiumBtn.className = 'btn btn-cancel';
+            premiumBtn.onclick = cancelPremiumSubscription;
+        } else {
+            premiumBtn.innerHTML = '<i class="fas fa-crown"></i> Aboneaza-te Premium';
+            premiumBtn.className = 'btn btn-premium';
+            premiumBtn.onclick = subscribePremium;
+        }
+        premiumBtn.disabled = false;
+    }
+}
+
+function toggleAuthRequiredFeatures(isAuthenticated) {
+    document.querySelectorAll('[data-requires-auth="true"]').forEach(el => {
+        if (isAuthenticated) {
+            el.classList.remove('locked');
+            el.removeAttribute('title');
+            el.onclick = null;
+        } else {
+            el.classList.add('locked');
+            el.setAttribute('title', 'Trebuie sa te conectezi pentru a accesa aceasta functie');
+            el.onclick = (e) => {
+                e.preventDefault();
+                openModal('loginModal');
+                return false;
+            };
+        }
+    });
+}
 
 // Premium subscription functions
 async function subscribePremium() {
@@ -1252,10 +1239,10 @@ async function cancelPremiumSubscription() {
             throw new Error(result.error || 'Eroare la anularea abonamentului');
         }
 
-        // Refresh user data to get updated premium status
+        // Force refresh user data to get updated premium status
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (user) {
-            await loadUserData(user);
+            await loadUserData(user, true);
         }
         
         showAlert('Abonamentul Premium a fost anulat cu succes. Iti multumim ca ai fost membru Premium!', 'success');
@@ -1357,8 +1344,7 @@ async function processPremiumSubscription() {
         processingBtn.innerHTML = originalText;
     }
 }
-
-// Enhanced Stripe success handling
+        // Enhanced Stripe success handling
 async function handleStripeSuccess() {
     console.log('Handling Stripe payment success...');
     
@@ -1374,7 +1360,7 @@ async function handleStripeSuccess() {
     try {
         // Enhanced subscription checking with multiple attempts
         let attempts = 0;
-        const maxAttempts = 20; // Try for 20 seconds
+        const maxAttempts = 30; // Try for 30 seconds
         
         const checkSubscription = async () => {
             attempts++;
@@ -1394,7 +1380,7 @@ async function handleStripeSuccess() {
                     // Force refresh user data
                     const { data: { user } } = await supabaseClient.auth.getUser();
                     if (user) {
-                        await loadUserData(user);
+                        await loadUserData(user, true);
                     }
                     
                     showAlert('Felicitari! Abonamentul Premium a fost activat cu succes!', 'success');
@@ -1413,7 +1399,7 @@ async function handleStripeSuccess() {
                     setTimeout(async () => {
                         const { data: { user } } = await supabaseClient.auth.getUser();
                         if (user) {
-                            await loadUserData(user);
+                            await loadUserData(user, true);
                             if (currentUser && currentUser.is_premium) {
                                 showAlert('Abonamentul Premium a fost activat!', 'success');
                             }
@@ -1534,30 +1520,42 @@ async function initializeApp() {
 }
 
 // Event listeners
-document.getElementById('loginForm').addEventListener('submit', login);
-document.getElementById('registerForm').addEventListener('submit', register);
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize form listeners
+    document.getElementById('loginForm').addEventListener('submit', login);
+    document.getElementById('registerForm').addEventListener('submit', register);
 
-// Close modals when clicking outside
-window.addEventListener('click', (event) => {
-    if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('show');
-    }
+    // Close modals when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target.classList.contains('modal')) {
+            event.target.classList.remove('show');
+        }
+    });
+
+    // Add visual feedback for locked features
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.locked')) {
+            e.target.closest('.locked').style.animation = 'shake 0.5s';
+            setTimeout(() => {
+                if (e.target.closest('.locked')) {
+                    e.target.closest('.locked').style.animation = '';
+                }
+            }, 500);
+        }
+    });
+
+    // Initialize the app
+    initializeApp();
 });
 
-// Add visual feedback for locked features
-document.addEventListener('click', (e) => {
-    if (e.target.closest('.locked')) {
-        e.target.closest('.locked').style.animation = 'shake 0.5s';
-        setTimeout(() => {
-            if (e.target.closest('.locked')) {
-                e.target.closest('.locked').style.animation = '';
-            }
-        }, 500);
-    }
-});
-
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeApp);
+// Additional helper functions for window scope
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.toggleMobileMenu = toggleMobileMenu;
+window.subscribePremium = subscribePremium;
+window.processPremiumSubscription = processPremiumSubscription;
+window.cancelPremiumSubscription = cancelPremiumSubscription;
+window.logout = logout;
     </script>
 </body>
 </html>
