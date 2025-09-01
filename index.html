@@ -586,38 +586,10 @@
                     <a href="en/en-teste-PDF.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste de Antrenament PDF
                     </a>
-                    <a href="en/en-premium.html" class="subsection-btn" data-requires-premium="true">
-                        <i class="fas fa-clipboard-check"></i> Premium
-                        <i class="fas fa-crown premium-lock"></i>
-                    </a>
                 </div>
             </div>
 
-            <div class="section-card" id="bacalaureat">
-                <h3><i class="fas fa-university"></i> Bacalaureat</h3>
-                <p>Pregătire pentru examenul de bacalaureat</p>
-                <div class="subsections">
-                    <a href="bac/bac-lectii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-book"></i> Lecții
-                    </a>
-                    <a href="bac/bac-exercitii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-pencil-alt"></i> Exerciții pe Capitole
-                    </a>
-                    <a href="bac/bac-teste-interactive.html" class="subsection-btn" data-requires-auth="true">
-                        <i class="fas fa-clipboard-check"></i> Teste Interactive
-                    </a>
-                    <a href="bac/bac-teste-PDF.html" class="subsection-btn" data-requires-auth="true">
-                        <i class="fas fa-clipboard-check"></i> Teste de Antrenament PDF
-                    </a>
-                    <a href="bac/bac-premium.html" class="subsection-btn" data-requires-premium="true">
-                        <i class="fas fa-clipboard-check"></i> Premium
-                        <i class="fas fa-crown premium-lock"></i>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Clase 5-12 -->
+        <!-- Clase 5-8 -->
         <div class="sections-grid fade-in" id="clase">
             <div class="section-card">
                 <h3><i class="fas fa-child"></i> Clasa a 5-a</h3>
@@ -630,10 +602,6 @@
                     </a>
                     <a href="5/5-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
-                    </a>
-                    <a href="5/5-premium.html" class="subsection-btn" data-requires-premium="true">
-                        <i class="fas fa-clipboard-check"></i> Premium
-                        <i class="fas fa-crown premium-lock"></i>
                     </a>
                 </div>
             </div>
@@ -650,10 +618,6 @@
                     <a href="6/6-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
                     </a>
-                    <a href="6/6-premium.html" class="subsection-btn" data-requires-premium="true">
-                        <i class="fas fa-clipboard-check"></i> Premium
-                        <i class="fas fa-crown premium-lock"></i>
-                    </a>
                 </div>
             </div>
 
@@ -668,10 +632,6 @@
                     </a>
                     <a href="7/7-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
-                    </a>
-                    <a href="7/7-premium.html" class="subsection-btn" data-requires-premium="true">
-                        <i class="fas fa-clipboard-check"></i> Premium
-                        <i class="fas fa-crown premium-lock"></i>
                     </a>
                 </div>
             </div>
@@ -688,26 +648,9 @@
                     <a href="8/8-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
                     </a>
-                    <a href="8/8-premium.html" class="subsection-btn" data-requires-premium="true">
-                        <i class="fas fa-clipboard-check"></i> Premium
-                        <i class="fas fa-crown premium-lock"></i>
-                    </a>
                 </div>
             </div>
         </div>
-
-        <!-- Servicii Premium -->
-        <div class="special-sections fade-in">
-            <div class="special-card">
-                <h3><i class="fas fa-chalkboard-teacher"></i> Lecții și exerciții Premium</h3>
-                <p>Acces la mai multe lecții și exerciții interactive</p>
-                <div class="price">49 RON/lună</div>
-                <button class="btn btn-premium" onclick="subscribePremium()" id="premiumBtn">
-                    <i class="fas fa-crown"></i> Abonează-te Premium
-                </button>
-            </div>
-        </div>
-    </main>
 
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
@@ -765,27 +708,6 @@
                     <i class="fas fa-user-plus"></i> Înregistrează-te Gratuit
                 </button>
             </form>
-        </div>
-    </div>
-
-    <!-- Premium Modal -->
-    <div id="premiumModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('premiumModal')">&times;</span>
-            <h2><i class="fas fa-crown"></i> Abonament Premium</h2>
-            <div class="premium-info">
-                <h3>Beneficiile Premium:</h3>
-                <ul style="margin: 1rem 0; padding-left: 2rem;">
-                    <li>Acces la toate testele PDF</li>
-                    <li>Teste interactive avansate</li>
-                    <li>Progres urmărit detaliat</li>
-                    <li>Suport prioritar</li>
-                </ul>
-                <div class="price" style="text-align: center;">49 RON/lună</div>
-                <button class="btn btn-premium" style="width: 100%;" onclick="processPremiumSubscription()">
-                    <i class="fas fa-credit-card"></i> Activează Premium
-                </button>
-            </div>
         </div>
     </div>
 
