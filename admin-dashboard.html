@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Profesor - Platformă Matematică</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            padding: 2rem 0;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding: 0 1rem 2rem;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .sidebar-header h2 {
+            color: #667eea;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .sidebar-menu i {
+            margin-right: 0.75rem;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .content-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .content-header p {
+            color: #666;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-card-icon.blue {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .stat-card-icon.green {
+            background: linear-gradient(135deg, #38a169, #48bb78);
+            color: white;
+        }
+
+        .stat-card-icon.yellow {
+            background: linear-gradient(135deg, #d69e2e, #ecc94b);
+            color: white;
+        }
+
+        .stat-card-icon.red {
+            background: linear-gradient(135deg, #e53e3e, #f56565);
+            color: white;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-card-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        .data-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #38a169, #48bb78);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #d69e2e, #ecc94b);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead {
+            background: #f8f9ff;
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            color: #667eea;
+            font-weight: 600;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e0e7ff;
+            color: #333;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #d4f4dd;
+            color: #22543d;
+        }
+
+        .badge-warning {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .badge-danger {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .badge-info {
+            background: #e0f2ff;
+            color: #1e40af;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 0.5rem;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-group select:focus, .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 2rem 0;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            background: none;
+            border: none;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .data-table {
+                font-size: 0.9rem;
+            }
+
+            .data-table th, .data-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-chalkboard-teacher"></i> Dashboard Profesor</h2>
+                <p id="teacherName">Profesor Admin</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" class="active" onclick="showSection('overview')">
+                        <i class="fas fa-chart-line"></i> Prezentare Generală
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('students')">
+                        <i class="fas fa-users"></i> Elevi
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('grades')">
+                        <i class="fas fa-star"></i> Note și Rezultate
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('lessons')">
+                        <i class="fas fa-book"></i> Lecții
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('tests')">
+                        <i class="fas fa-clipboard-check"></i> Teste
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('progress')">
+                        <i class="fas fa-chart-bar"></i> Progres
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="showSection('announcements')">
+                        <i class="fas fa-bullhorn"></i> Anunțuri
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Deconectare
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Overview Section -->
+            <div id="overview-section" class="content-section">
+                <div class="content-header">
+                    <h1>Prezentare Generală</h1>
+                    <p>Statistici și informații despre platformă</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="totalStudents">0</div>
+                                <div class="stat-card-label">Total Elevi</div>
+                            </div>
+                            <div class="stat-card-icon blue">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="totalTests">0</div>
+                                <div class="stat-card-label">Teste Create</div>
+                            </div>
+                            <div class="stat-card-icon green">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="averageScore">0%</div>
+                                <div class="stat-card-label">Media Generală</div>
+                            </div>
+                            <div class="stat-card-icon yellow">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div>
+                                <div class="stat-card-value" id="activeToday">0</div>
+                                <div class="stat-card-label">Activi Astăzi</div>
+                            </div>
+                            <div class="stat-card-icon red">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Performanță pe Clase</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Activitate Recentă</h2>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Elev</th>
+                                <th>Acțiune</th>
+                                <th>Detalii</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentActivityTable">
+                            <tr>
+                                <td colspan="4" class="loading">
+                                    <div class="spinner"></div>
+                                    Se încarcă...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Students Section -->
+            <div id="students-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1>Elevi</h1>
+                    <p>Gestionare și monitorizare elevi</p>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Clasa:</label>
+                        <select id="classFilter">
+                            <option value="">Toate</option>
+                            <option value="5">Clasa a 5-a</option>
+                            <option value="6">Clasa a 6-a</option>
+                            <option value="7">Clasa a 7-a</option>
+                            <option value="8">Clasa a 8-a</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Căutare:</label>
+                        <input type="text" id="studentSearch" placeholder="Nume sau email...">
+                    </div>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Lista Elevi</h2>
+                        <button class="btn btn-primary" onclick="exportStudents()">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Nume</th>
+                                <th>Email</th>
+                                <th>Clasa</th>
+                                <th>Status</th>
+                                <th>Înregistrat</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTable">
+                            <tr>
+                                <td colspan="6" class="loading">
+                                    <div class="spinner"></div>
+                                    Se încarcă...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Grades Section -->
+            <div id="grades-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1>Note și Rezultate</h1>
+                    <p>Vizualizare rezultate teste</p>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Clasa:</label>
+                        <select id="gradeClassFilter">
+                            <option value="">Toate</option>
+                            <option value="5">Clasa a 5-a</option>
+                            <option value="6">Clasa a 6-a</option>
+                            <option value="7">Clasa a 7-a</option>
+                            <option value="8">Clasa a 8-a</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Test:</label>
+                        <select id="testFilter">
+                            <option value="">Toate testele</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Perioada:</label>
+                        <input type="date" id="dateFromFilter">
+                    </div>
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <input type="date" id="dateToFilter">
+                    </div>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Rezultate Teste</h2>
+                        <button class="btn btn-success" onclick="exportGrades()">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Elev</th>
+                                <th>Test</th>
+                                <th>Scor</th>
+                                <th>Procent</th>
+                                <th>Timp</th>
+                                <th>Data</th>
+                                <th>Detalii</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradesTable">
+                            <tr>
+                                <td colspan="7" class="loading">
+                                    <div class="spinner"></div>
+                                    Se încarcă...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Lessons Section -->
+            <div id="lessons-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1>Lecții</h1>
+                    <p>Gestionare lecții și materiale</p>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Lista Lecții</h2>
+                        <button class="btn btn-primary" onclick="openAddLessonModal()">
+                            <i class="fas fa-plus"></i> Adaugă Lecție
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Titlu</th>
+                                <th>Clasa</th>
+                                <th>Capitol</th>
+                                <th>Premium</th>
+                                <th>Creat</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lessonsTable">
+                            <tr>
+                                <td colspan="6" class="loading">
+                                    <div class="spinner"></div>
+                                    Se încarcă...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tests Section -->
+            <div id="tests-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1>Teste</h1>
+                    <p>Gestionare teste și evaluări</p>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Lista Teste</h2>
+                        <button class="btn btn-primary" onclick="openAddTestModal()">
+                            <i class="fas fa-plus"></i> Adaugă Test
+                        </button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Titlu</th>
+                                <th>Clasa</th>
+                                <th>Categorie</th>
+                                <th>Timp Limită</th>
+                                <th>Punctaj Max</th>
+                                <th>Premium</th>
+                                <th>Acțiuni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="testsTable">
+                            <tr>
+                                <td colspan="7" class="loading">
+                                    <div class="spinner"></div>
+                                    Se încarcă...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progress-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1>Progres Elevi</h1>
+                    <p>Monitorizare progres individual</p>
+                </div>
+
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Selectează Elev:</label>
+                        <select id="studentProgressFilter">
+                            <option value="">Alege un elev...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="studentProgressDetails" style="display: none;">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-card-value" id="studentLessonsCompleted">0</div>
+                                    <div class="stat-card-label">Lecții Complete</div>
+                                </div>
+                                <div class="stat-card-icon blue">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-card-value" id="studentTestsTaken">0</div>
+                                    <div class="stat-card-label">Teste Date</div>
+                                </div>
+                                <div class="stat-card-icon green">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-card-value" id="studentAverageScore">0%</div>
+                                    <div class="stat-card-label">Media Notelor</div>
+                                </div>
+                                <div class="stat-card-icon yellow">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-card-value" id="studentTimeSpent">0h</div>
+                                    <div class="stat-card-label">Timp Total</div>
+                                </div>
+                                <div class="stat-card-icon red">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-section">
+                        <div class="section-header">
+                            <h2>Progres pe Lecții</h2>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="studentProgressChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements Section -->
+            <div id="announcements-section" class="content-section" style="display: none;">
+                <div class="content-header">
+                    <h1>Anunțuri</h1>
+                    <p>Comunică cu elevii</p>
+                </div>
+
+                <div class="data-section">
+                    <div class="section-header">
+                        <h2>Anunțuri Active</h2>
+                        <button class="btn btn-primary" onclick="openAddAnnouncementModal()">
+                            <i class="fas fa-plus"></i> Anunț Nou
+                        </button>
+                    </div>
+                    <div id="announcementsList">
+                        <!-- Anunțurile vor fi încărcate aici -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Student Details Modal -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalii Elev</h2>
+                <button class="modal-close" onclick="closeModal('studentModal')">&times;</button>
+            </div>
+            <div id="studentModalContent">
+                <!-- Conținutul va fi încărcat dinamic -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Lesson Modal -->
+    <div id="addLessonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adaugă Lecție Nouă</h2>
+                <button class="modal-close" onclick="closeModal('addLessonModal')">&times;</button>
+            </div>
+            <form id="addLessonForm">
+                <div class="filter-group">
+                    <label>Titlu Lecție:</label>
+                    <input type="text" id="lessonTitle" required>
+                </div>
+                <div class="filter-group">
+                    <label>Descriere:</label>
+                    <textarea id="lessonDescription" rows="3" style="width: 100%; padding: 0.5rem; border: 2px solid #e0e7ff; border-radius: 8px;"></textarea>
+                </div>
+                <div class="filter-group">
+                    <label>Clasa:</label>
+                    <select id="lessonClass" required>
+                        <option value="5">Clasa a 5-a</option>
+                        <option value="6">Clasa a 6-a</option>
+                        <option value="7">Clasa a 7-a</option>
+                        <option value="8">Clasa a 8-a</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Capitol:</label>
+                    <input type="text" id="lessonChapter">
+                </div>
+                <div class="filter-group">
+                    <label>URL Conținut:</label>
+                    <input type="url" id="lessonUrl">
+                </div>
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="lessonPremium">
+                        Doar pentru Premium
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fas fa-save"></i> Salvează Lecție
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Test Modal -->
+    <div id="addTestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adaugă Test Nou</h2>
+                <button class="modal-close" onclick="closeModal('addTestModal')">&times;</button>
+            </div>
+            <form id="addTestForm">
+                <div class="filter-group">
+                    <label>Titlu Test:</label>
+                    <input type="text" id="testTitle" required>
+                </div>
+                <div class="filter-group">
+                    <label>Descriere:</label>
+                    <textarea id="testDescription" rows="3" style="width: 100%; padding: 0.5rem; border: 2px solid #e0e7ff; border-radius: 8px;"></textarea>
+                </div>
+                <div class="filter-group">
+                    <label>Clasa:</label>
+                    <select id="testClass" required>
+                        <option value="5">Clasa a 5-a</option>
+                        <option value="6">Clasa a 6-a</option>
+                        <option value="7">Clasa a 7-a</option>
+                        <option value="8">Clasa a 8-a</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Categorie:</label>
+                    <select id="testCategory">
+                        <option value="capitol">Capitol</option>
+                        <option value="recapitulare">Recapitulare</option>
+                        <option value="evaluare_nationala">Evaluare Națională</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Timp Limită (minute):</label>
+                    <input type="number" id="testTimeLimit" min="5" max="180" value="60">
+                </div>
+                <div class="filter-group">
+                    <label>Punctaj Maxim:</label>
+                    <input type="number" id="testMaxScore" min="10" max="100" value="100">
+                </div>
+                <div class="filter-group">
+                    <label>URL Test:</label>
+                    <input type="url" id="testUrl">
+                </div>
+                <div class="filter-group">
+                    <label>
+                        <input type="checkbox" id="testPremium">
+                        Doar pentru Premium
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fas fa-save"></i> Salvează Test
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Announcement Modal -->
+    <div id="addAnnouncementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Anunț Nou</h2>
+                <button class="modal-close" onclick="closeModal('addAnnouncementModal')">&times;</button>
+            </div>
+            <form id="addAnnouncementForm">
+                <div class="filter-group">
+                    <label>Titlu:</label>
+                    <input type="text" id="announcementTitle" required>
+                </div>
+                <div class="filter-group">
+                    <label>Conținut:</label>
+                    <textarea id="announcementContent" rows="5" style="width: 100%; padding: 0.5rem; border: 2px solid #e0e7ff; border-radius: 8px;" required></textarea>
+                </div>
+                <div class="filter-group">
+                    <label>Pentru Clasa:</label>
+                    <select id="announcementClass">
+                        <option value="">Toate Clasele</option>
+                        <option value="5">Clasa a 5-a</option>
+                        <option value="6">Clasa a 6-a</option>
+                        <option value="7">Clasa a 7-a</option>
+                        <option value="8">Clasa a 8-a</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+                    <i class="fas fa-bullhorn"></i> Publică Anunț
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin-script.js"></script>
+</body>
+</html>
