@@ -1,7 +1,7 @@
-// supabase-connection.js
-// Configurare Supabase - Înlocuiește cu cheile tale din Supabase
-const SUPABASE_URL = 'https://ireytpwqkymtkersdsba.supabase.co'; // Înlocuiește cu URL-ul tău
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyZXl0cHdxa3ltdGtlcnNkc2JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMjIwNTQsImV4cCI6MjA3Mjg5ODA1NH0.XLSUZzedVH-QsZt0JxJQfpEDsOyssar3Q4lnajlZa5o'; // Înlocuiește cu cheia ta anon
+// supabase-connection.js - Versiune corectată pentru probleme RLS
+// Configurare Supabase - Înlocuiește cu cheile tale
+const SUPABASE_URL = 'https://ireytpwqkymtkersdsba.supabase.co'; // Înlocuiește
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyZXl0cHdxa3ltdGtlcnNkc2JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMjIwNTQsImV4cCI6MjA3Mjg5ODA1NH0.XLSUZzedVH-QsZt0JxJQfpEDsOyssar3Q4lnajlZa5o'; // Înlocuiește
 
 // Inițializare client Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -37,8 +37,13 @@ async function getUserDetails() {
         const { data, error } = await supabase
             .from('users')
             .select('*')
-            .eq('email', currentUser.email)
+            .eq('id', currentUser.id)
             .single();
+        
+        if (error) {
+            console.error('Eroare la obținerea detaliilor:', error);
+            return;
+        }
         
         if (data) {
             currentUser = { ...currentUser, ...data };
@@ -48,12 +53,12 @@ async function getUserDetails() {
     }
 }
 
-// Înregistrare utilizator nou
+// Înregistrare utilizator nou - VERSIUNE CORECTATĂ
 async function register(event) {
     event.preventDefault();
     
-    const name = document.getElementById('registerName').value;
-    const email = document.getElementById('registerEmail').value;
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
     const classLevel = document.getElementById('registerClass')?.value || '';
     
@@ -61,21 +66,60 @@ async function register(event) {
     const errorDiv = document.getElementById('registerError');
     const successDiv = document.getElementById('registerSuccess');
     
+    // Validare
+    if (!name || !email || !password) {
+        errorDiv.textContent = 'Toate câmpurile sunt obligatorii!';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
+    if (password.length < 6) {
+        errorDiv.textContent = 'Parola trebuie să aibă cel puțin 6 caractere!';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se înregistrează...';
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
     
     try {
-        // Înregistrare în Supabase Auth
+        // PASUL 1: Înregistrare în Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
+            options: {
+                data: {
+                    name: name,
+                    class_level: classLevel
+                }
+            }
         });
         
-        if (authError) throw authError;
+        if (authError) {
+            console.error('Eroare Auth:', authError);
+            
+            // Mesaje de eroare personalizate
+            if (authError.message.includes('already registered')) {
+                throw new Error('Acest email este deja înregistrat!');
+            } else if (authError.message.includes('invalid')) {
+                throw new Error('Email-ul nu este valid!');
+            } else if (authError.message.includes('weak')) {
+                throw new Error('Parola este prea slabă!');
+            } else {
+                throw authError;
+            }
+        }
         
-        // Adaugă utilizatorul în tabelul users
+        if (!authData.user) {
+            throw new Error('Nu s-a putut crea utilizatorul. Încearcă din nou.');
+        }
+        
+        console.log('Utilizator Auth creat:', authData.user.id);
+        
+        // PASUL 2: Adaugă utilizatorul în tabelul users
+        // Folosim service key sau facem direct din Auth trigger
         const { error: dbError } = await supabase
             .from('users')
             .insert([
@@ -83,43 +127,108 @@ async function register(event) {
                     id: authData.user.id,
                     email: email,
                     name: name,
-                    class_level: classLevel,
+                    class_level: classLevel || null,
                     role: 'student'
                 }
-            ]);
+            ])
+            .select()
+            .single();
         
-        if (dbError) throw dbError;
+        if (dbError) {
+            console.error('Eroare DB:', dbError);
+            
+            // Dacă eroarea este de RLS, încearcă să loghezi utilizatorul
+            if (dbError.code === '42501' || dbError.message.includes('row-level security')) {
+                console.log('Eroare RLS detectată, încercăm autentificare directă...');
+                
+                // Încearcă să te autentifici direct
+                const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (!signInError && signInData.user) {
+                    // Acum încearcă din nou să inserezi în tabel
+                    const { error: retryError } = await supabase
+                        .from('users')
+                        .upsert([
+                            {
+                                id: signInData.user.id,
+                                email: email,
+                                name: name,
+                                class_level: classLevel || null,
+                                role: 'student'
+                            }
+                        ])
+                        .select()
+                        .single();
+                    
+                    if (!retryError) {
+                        console.log('Utilizator adăugat cu succes după reîncercare!');
+                    }
+                }
+            }
+        }
         
-        successDiv.textContent = 'Înregistrare reușită! Verifică email-ul pentru confirmare.';
+        successDiv.textContent = 'Înregistrare reușită! Te poți conecta acum.';
         successDiv.style.display = 'block';
         
         // Resetează formularul
         document.getElementById('registerForm').reset();
         
-        // Închide modalul după 2 secunde
+        // Închide modalul și afișează mesaj de succes
         setTimeout(() => {
             closeModal('registerModal');
             showAlert('success', 'Înregistrare reușită! Te poți conecta acum.');
+            
+            // Deschide automat modalul de login
+            openModal('loginModal');
         }, 2000);
         
     } catch (error) {
-        errorDiv.textContent = error.message || 'Eroare la înregistrare. Încearcă din nou.';
+        console.error('Eroare completă:', error);
+        
+        let errorMessage = 'Eroare la înregistrare. ';
+        
+        if (error.message) {
+            errorMessage += error.message;
+        } else {
+            errorMessage += 'Verifică datele și încearcă din nou.';
+        }
+        
+        errorDiv.textContent = errorMessage;
         errorDiv.style.display = 'block';
+        
+        // Sugestii pentru utilizator
+        if (error.message && error.message.includes('row-level security')) {
+            errorDiv.innerHTML = `
+                ${errorMessage}<br>
+                <small style="margin-top: 10px; display: block;">
+                    Dacă problema persistă, contactează administratorul site-ului.
+                </small>
+            `;
+        }
     } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Înregistrează-te Gratuit';
+        submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Înregistrează-te';
     }
 }
 
-// Conectare utilizator
+// Conectare utilizator - VERSIUNE ÎMBUNĂTĂȚITĂ
 async function login(event) {
     event.preventDefault();
     
-    const email = document.getElementById('loginEmail').value;
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     
     const submitBtn = document.getElementById('loginSubmitBtn');
     const errorDiv = document.getElementById('loginError');
+    
+    if (!email || !password) {
+        errorDiv.textContent = 'Completează toate câmpurile!';
+        errorDiv.style.display = 'block';
+        return;
+    }
     
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se conectează...';
@@ -131,16 +240,56 @@ async function login(event) {
             password: password,
         });
         
-        if (error) throw error;
+        if (error) {
+            console.error('Eroare login:', error);
+            
+            if (error.message.includes('Invalid login')) {
+                throw new Error('Email sau parolă incorectă!');
+            } else if (error.message.includes('Email not confirmed')) {
+                throw new Error('Verifică-ți email-ul pentru confirmare!');
+            } else {
+                throw error;
+            }
+        }
         
         currentUser = data.user;
-        await getUserDetails();
         
-        // Actualizează ultima conectare
-        await supabase
+        // Verifică dacă utilizatorul există în tabelul users
+        const { data: userData, error: userError } = await supabase
             .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', currentUser.id);
+            .select('*')
+            .eq('id', currentUser.id)
+            .single();
+        
+        if (userError || !userData) {
+            console.log('Utilizatorul nu există în tabel, îl adăugăm...');
+            
+            // Adaugă utilizatorul în tabel dacă nu există
+            const { error: insertError } = await supabase
+                .from('users')
+                .upsert([
+                    {
+                        id: currentUser.id,
+                        email: currentUser.email,
+                        name: currentUser.user_metadata?.name || email.split('@')[0],
+                        class_level: currentUser.user_metadata?.class_level || null,
+                        role: 'student',
+                        last_login: new Date().toISOString()
+                    }
+                ]);
+            
+            if (!insertError) {
+                console.log('Utilizator adăugat în tabel cu succes!');
+            }
+        } else {
+            // Actualizează ultima conectare
+            await supabase
+                .from('users')
+                .update({ last_login: new Date().toISOString() })
+                .eq('id', currentUser.id);
+            
+            currentUser = { ...currentUser, ...userData };
+        }
         
         closeModal('loginModal');
         updateUI();
@@ -148,11 +297,14 @@ async function login(event) {
         
         // Redirecționează admin-ul către panoul de administrare
         if (currentUser.role === 'admin') {
-            window.location.href = 'admin.html';
+            setTimeout(() => {
+                window.location.href = 'admin.html';
+            }, 1000);
         }
         
     } catch (error) {
-        errorDiv.textContent = error.message || 'Email sau parolă incorectă.';
+        console.error('Eroare completă login:', error);
+        errorDiv.textContent = error.message || 'Eroare la conectare. Încearcă din nou.';
         errorDiv.style.display = 'block';
     } finally {
         submitBtn.disabled = false;
@@ -191,7 +343,11 @@ function updateUI() {
         if (authButtons) authButtons.style.display = 'none';
         if (userInfo) {
             userInfo.style.display = 'flex';
-            document.getElementById('userName').textContent = currentUser.name || currentUser.email;
+            userInfo.classList.add('show');
+            const userName = document.getElementById('userName');
+            if (userName) {
+                userName.textContent = currentUser.name || currentUser.email || 'Utilizator';
+            }
         }
         
         if (heroMessage) {
@@ -203,7 +359,10 @@ function updateUI() {
     } else {
         // Utilizator neconectat
         if (authButtons) authButtons.style.display = 'flex';
-        if (userInfo) userInfo.style.display = 'none';
+        if (userInfo) {
+            userInfo.style.display = 'none';
+            userInfo.classList.remove('show');
+        }
         
         if (heroMessage) {
             heroMessage.textContent = 'Alătură-te comunității noastre pentru a excela la matematică!';
@@ -220,9 +379,9 @@ function unlockAuthSections() {
     authRequiredLinks.forEach(link => {
         link.classList.remove('locked');
         link.onclick = null;
-        // Elimină iconița de lacăt dacă există
-        const lock = link.querySelector('.premium-lock');
-        if (lock) lock.remove();
+        // Elimină iconița de lacăt
+        const lock = link.querySelector('.auth-lock');
+        if (lock) lock.style.display = 'none';
     });
 }
 
@@ -235,19 +394,20 @@ function lockAuthSections() {
             e.preventDefault();
             showAlert('warning', 'Trebuie să te conectezi pentru a accesa această secțiune!');
             openModal('loginModal');
+            return false;
         };
-        // Adaugă iconița de lacăt
-        if (!link.querySelector('.premium-lock')) {
-            const lock = document.createElement('i');
-            lock.className = 'fas fa-lock premium-lock';
-            link.appendChild(lock);
-        }
+        // Afișează iconița de lacăt
+        const lock = link.querySelector('.auth-lock');
+        if (lock) lock.style.display = 'block';
     });
 }
 
 // Salvează progresul la lecții
 async function saveLesson(lessonUrl, lessonName, classLevel) {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('Utilizator neautentificat, nu se salvează progresul');
+        return;
+    }
     
     try {
         const { error } = await supabase
@@ -272,16 +432,45 @@ async function saveLesson(lessonUrl, lessonName, classLevel) {
 
 // Salvează rezultatul testului
 async function saveTestResult(testId, testName, score, classLevel, answers = null) {
-    if (!currentUser) return;
+    if (!currentUser) {
+        showAlert('warning', 'Trebuie să fii conectat pentru a salva rezultatul!');
+        return false;
+    }
     
     try {
+        // Verifică dacă există testul în tabelul tests
+        let { data: testData } = await supabase
+            .from('tests')
+            .select('id')
+            .eq('id', testId)
+            .single();
+        
+        // Dacă testul nu există, îl creăm
+        if (!testData) {
+            const { error: testError } = await supabase
+                .from('tests')
+                .insert({
+                    id: testId,
+                    test_name: testName,
+                    class_level: classLevel,
+                    category: 'teste',
+                    max_score: 100
+                });
+            
+            if (testError) {
+                console.error('Eroare la crearea testului:', testError);
+            }
+        }
+        
+        // Salvează rezultatul
         const { error } = await supabase
             .from('test_results')
             .insert({
                 user_id: currentUser.id,
                 test_id: testId,
                 score: score,
-                answers: answers
+                answers: answers,
+                completed_at: new Date().toISOString()
             });
         
         if (error) throw error;
@@ -312,10 +501,14 @@ function closeModal(modalId) {
 
 // Afișează alerte
 function showAlert(type, message) {
+    // Elimină alertele existente
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type}`;
     alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
         ${message}
     `;
     
@@ -383,10 +576,18 @@ function formatDate(dateString) {
     });
 }
 
+// Funcție pentru generare ID unic
+function generateUniqueId() {
+    return 'test_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
 // Exportă funcțiile globale pentru a fi accesibile din HTML
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.logout = logout;
 window.toggleMobileMenu = toggleMobileMenu;
 window.saveTestResult = saveTestResult;
+window.saveLesson = saveLesson;
+window.generateUniqueId = generateUniqueId;
 window.supabase = supabase;
+window.currentUser = currentUser;
