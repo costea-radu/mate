@@ -36,7 +36,6 @@
             width: 100%;
             top: 0;
             z-index: 1000;
-            transition: all 0.3s ease;
         }
 
         nav {
@@ -96,14 +95,13 @@
             display: flex;
         }
 
-        .premium-badge {
-            background: linear-gradient(135deg, #ffd700, #ffed4a);
-            color: #333;
+        .admin-badge {
+            background: linear-gradient(135deg, #e53e3e, #f56565);
+            color: white;
             padding: 0.25rem 0.5rem;
             border-radius: 15px;
             font-size: 0.8rem;
             font-weight: bold;
-            animation: pulse 2s infinite;
         }
 
         .btn {
@@ -129,13 +127,7 @@
             border: 2px solid #667eea;
         }
 
-        .btn-premium {
-            background: linear-gradient(135deg, #ffd700, #ffed4a);
-            color: #333;
-            font-weight: bold;
-        }
-
-        .btn-cancel {
+        .btn-admin {
             background: linear-gradient(135deg, #e53e3e, #f56565);
             color: white;
         }
@@ -143,12 +135,6 @@
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
         }
 
         /* Mobile menu */
@@ -213,7 +199,6 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            position: relative;
         }
 
         .section-card:hover {
@@ -259,16 +244,17 @@
             transform: translateX(5px);
         }
 
-        .premium-lock {
+        .auth-lock {
             position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            color: #ffd700;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            color: #d69e2e;
             font-size: 0.9rem;
         }
 
         .locked {
-            opacity: 0.6;
+            opacity: 0.7;
             cursor: not-allowed;
         }
 
@@ -276,42 +262,6 @@
             background: linear-gradient(135deg, #f8f9ff, #e8ecff);
             color: #667eea;
             transform: none;
-        }
-
-        /* Special sections */
-        .special-sections {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .special-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            text-align: center;
-        }
-
-        .special-card h3 {
-            color: #fff;
-            margin-bottom: 1rem;
-            font-size: 1.8rem;
-        }
-
-        .special-card p {
-            margin-bottom: 1.5rem;
-            opacity: 0.9;
-        }
-
-        .price {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #ffd700;
-            margin: 1rem 0;
         }
 
         /* Modal */
@@ -398,12 +348,7 @@
             margin-top: 0.5rem;
         }
 
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Success/Alert messages */
+        /* Alert messages */
         .alert {
             position: fixed;
             top: 120px;
@@ -428,6 +373,10 @@
 
         .alert-warning {
             background: linear-gradient(135deg, #d69e2e, #ecc94b);
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #e53e3e, #f56565);
         }
 
         @keyframes slideInRight {
@@ -475,19 +424,9 @@
                 grid-template-columns: 1fr;
             }
 
-            .special-sections {
-                grid-template-columns: 1fr;
-            }
-
             .auth-buttons {
                 flex-direction: column;
                 gap: 0.5rem;
-            }
-
-            .alert {
-                right: 10px;
-                left: 10px;
-                max-width: none;
             }
         }
 
@@ -496,7 +435,7 @@
                 font-size: 2rem;
             }
 
-            .section-card, .special-card {
+            .section-card {
                 padding: 1.5rem;
             }
         }
@@ -509,21 +448,6 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-
-        @keyframes shake {
-            0%, 20%, 40%, 60%, 80%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
         }
     </style>
 </head>
@@ -542,13 +466,16 @@
                     <i class="fas fa-sign-in-alt"></i> Conectare
                 </button>
                 <button class="btn btn-primary" onclick="openModal('registerModal')">
-                    <i class="fas fa-user-plus"></i> Înregistrare Gratuită
+                    <i class="fas fa-user-plus"></i> Înregistrare
                 </button>
             </div>
 
             <div class="user-info" id="userInfo">
                 <span id="userName">Utilizator</span>
-                <span id="userPremium" class="premium-badge" style="display: none;">PREMIUM</span>
+                <span id="userRole" class="admin-badge" style="display: none;">ADMIN</span>
+                <button id="adminBtn" class="btn btn-admin" style="display: none;" onclick="goToAdmin()">
+                    <i class="fas fa-user-shield"></i> Panou Admin
+                </button>
                 <button class="btn btn-secondary" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Deconectare
                 </button>
@@ -564,7 +491,7 @@
 
     <main class="container">
         <section class="hero fade-in">
-            <h1>Învață Matematica cu ușurință</h1>
+            <h1>Învață Matematica cu Ușurință</h1>
             <p id="heroMessage">Alătură-te comunității noastre pentru a excela la matematică!</p>
         </section>
 
@@ -573,14 +500,15 @@
             <div class="section-card">
                 <h3><i class="fas fa-child"></i> Clasa a 5-a</h3>
                 <div class="subsections">
-                    <a href="5/5-lectii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-book"></i> Lecții 
+                    <a href="5/5-lectii.html" class="subsection-btn">
+                        <i class="fas fa-book"></i> Lecții
                     </a>
-                    <a href="5/5-exercitii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-pencil-alt"></i> Exerciții 
+                    <a href="5/5-exercitii.html" class="subsection-btn">
+                        <i class="fas fa-pencil-alt"></i> Exerciții
                     </a>
                     <a href="5/5-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-lock auth-lock"></i>
                     </a>
                 </div>
             </div>
@@ -588,14 +516,15 @@
             <div class="section-card">
                 <h3><i class="fas fa-child"></i> Clasa a 6-a</h3>
                 <div class="subsections">
-                    <a href="6/6-lectii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-book"></i> Lecții 
+                    <a href="6/6-lectii.html" class="subsection-btn">
+                        <i class="fas fa-book"></i> Lecții
                     </a>
-                    <a href="6/6-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                    <a href="6/6-exercitii.html" class="subsection-btn">
                         <i class="fas fa-pencil-alt"></i> Exerciții
                     </a>
                     <a href="6/6-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-lock auth-lock"></i>
                     </a>
                 </div>
             </div>
@@ -603,14 +532,15 @@
             <div class="section-card">
                 <h3><i class="fas fa-user-graduate"></i> Clasa a 7-a</h3>
                 <div class="subsections">
-                    <a href="7/7-lectii.html" class="subsection-btn" data-requires-auth="false">
+                    <a href="7/7-lectii.html" class="subsection-btn">
                         <i class="fas fa-book"></i> Lecții
                     </a>
-                    <a href="7/7-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                    <a href="7/7-exercitii.html" class="subsection-btn">
                         <i class="fas fa-pencil-alt"></i> Exerciții
                     </a>
                     <a href="7/7-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-lock auth-lock"></i>
                     </a>
                 </div>
             </div>
@@ -618,14 +548,15 @@
             <div class="section-card">
                 <h3><i class="fas fa-user-graduate"></i> Clasa a 8-a</h3>
                 <div class="subsections">
-                    <a href="8/8-lectii.html" class="subsection-btn" data-requires-auth="false">
+                    <a href="8/8-lectii.html" class="subsection-btn">
                         <i class="fas fa-book"></i> Lecții
                     </a>
-                    <a href="8/8-exercitii.html" class="subsection-btn" data-requires-auth="false">
+                    <a href="8/8-exercitii.html" class="subsection-btn">
                         <i class="fas fa-pencil-alt"></i> Exerciții
                     </a>
                     <a href="8/8-teste.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste
+                        <i class="fas fa-lock auth-lock"></i>
                     </a>
                 </div>
             </div>
@@ -634,22 +565,24 @@
                 <h3><i class="fas fa-graduation-cap"></i> Evaluare Națională</h3>
                 <p>Pregătire pentru examenul de evaluare națională</p>
                 <div class="subsections">
-                    <a href="en/en-lectii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-book"></i> Lecții 
+                    <a href="en/en-lectii.html" class="subsection-btn">
+                        <i class="fas fa-book"></i> Lecții
                     </a>
-                    <a href="en/en-exercitii.html" class="subsection-btn" data-requires-auth="false">
-                        <i class="fas fa-pencil-alt"></i> Exerciții pe Capitole 
+                    <a href="en/en-exercitii.html" class="subsection-btn">
+                        <i class="fas fa-pencil-alt"></i> Exerciții pe Capitole
                     </a>
                     <a href="en/en-teste-interactive.html" class="subsection-btn" data-requires-auth="true">
                         <i class="fas fa-clipboard-check"></i> Teste Interactive
+                        <i class="fas fa-lock auth-lock"></i>
                     </a>
                     <a href="en/en-teste-PDF.html" class="subsection-btn" data-requires-auth="true">
-                        <i class="fas fa-clipboard-check"></i> Teste de Antrenament PDF
+                        <i class="fas fa-file-pdf"></i> Teste PDF
+                        <i class="fas fa-lock auth-lock"></i>
                     </a>
                 </div>
             </div>
         </div>
-            
+
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -676,7 +609,7 @@
     <div id="registerModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('registerModal')">&times;</span>
-            <h2><i class="fas fa-user-plus"></i> Înregistrare Gratuită</h2>
+            <h2><i class="fas fa-user-plus"></i> Înregistrare</h2>
             <form id="registerForm">
                 <div class="form-group">
                     <label for="registerName">Nume complet:</label>
@@ -690,11 +623,20 @@
                     <label for="registerPassword">Parola:</label>
                     <input type="password" id="registerPassword" required minlength="6">
                 </div>
-
+                <div class="form-group">
+                    <label for="registerClass">Clasa:</label>
+                    <select id="registerClass">
+                        <option value="">Selectează clasa</option>
+                        <option value="5">Clasa a 5-a</option>
+                        <option value="6">Clasa a 6-a</option>
+                        <option value="7">Clasa a 7-a</option>
+                        <option value="8">Clasa a 8-a</option>
+                    </select>
+                </div>
                 <div id="registerError" class="error-message" style="display: none;"></div>
                 <div id="registerSuccess" class="success-message" style="display: none;"></div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;" id="registerSubmitBtn">
-                    <i class="fas fa-user-plus"></i> Înregistrează-te Gratuit
+                    <i class="fas fa-user-plus"></i> Înregistrează-te
                 </button>
             </form>
         </div>
@@ -708,6 +650,28 @@
     </footer>
 
     <script src="supabase-connection.js"></script>
-        
+    <script>
+        // Funcție pentru a merge la panoul admin
+        function goToAdmin() {
+            window.location.href = 'admin.html';
+        }
+
+        // Actualizează UI pentru a arăta butonul admin dacă e cazul
+        function updateUIAdmin() {
+            if (currentUser && currentUser.role === 'admin') {
+                const adminBtn = document.getElementById('adminBtn');
+                const userRole = document.getElementById('userRole');
+                if (adminBtn) adminBtn.style.display = 'inline-block';
+                if (userRole) userRole.style.display = 'inline-block';
+            }
+        }
+
+        // Adaugă la funcția updateUI existentă
+        const originalUpdateUI = window.updateUI;
+        window.updateUI = function() {
+            originalUpdateUI();
+            updateUIAdmin();
+        }
+    </script>
 </body>
 </html>
