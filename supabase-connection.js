@@ -1,7 +1,7 @@
 // supabase-connection.js
 // Configurare Supabase - Înlocuiește cu cheile tale din Supabase
-const SUPABASE_URL = 'https://your-project.supabase.co'; // Înlocuiește cu URL-ul tău
-const SUPABASE_ANON_KEY = 'your-anon-key-here'; // Înlocuiește cu cheia ta anon
+const SUPABASE_URL = 'https://ireytpwqkymtkersdsba.supabase.co'; // Înlocuiește cu URL-ul tău
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlyZXl0cHdxa3ltdGtlcnNkc2JhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTczMjIwNTQsImV4cCI6MjA3Mjg5ODA1NH0.XLSUZzedVH-QsZt0JxJQfpEDsOyssar3Q4lnajlZa5o'; // Înlocuiește cu cheia ta anon
 
 // Inițializare client Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
