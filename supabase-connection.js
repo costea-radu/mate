@@ -2,8 +2,8 @@
 // Configurație și funcții pentru conectarea la Supabase
 
 // Configurația Supabase - înlocuiește cu datele tale
-const SUPABASE_URL = 'https://bldtxspcfdukutmfiwpe.supabase.co'; // ex: https://your-project.supabase.co
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsZHR4c3BjZmR1a3V0bWZpd3BlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NDg3ODAsImV4cCI6MjA3MzMyNDc4MH0.Fs2Pm_xcYbGYjYWEaHWDDuqb7WLj_7W3R7qMYQ-1yqM';
+const SUPABASE_URL = 'https://bdorzekhilycgonmumga.supabase.co'; // ex: https://your-project.supabase.co
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJkb3J6ZWtoaWx5Y2dvbm11bWdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NTEyOTksImV4cCI6MjA3MzMyNzI5OX0.uLb9-u8IbJu8CHVNm_Tlkg2sHqBtYAK1RyWferoYK9A';
 
 // Inițializează clientul Supabase
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
