@@ -650,28 +650,6 @@
     </footer>
 
     <script src="supabase-connection.js"></script>
-    <script>
-        // Funcție pentru a merge la panoul admin
-        function goToAdmin() {
-            window.location.href = 'admin.html';
-        }
 
-        // Actualizează UI pentru a arăta butonul admin dacă e cazul
-        function updateUIAdmin() {
-            if (currentUser && currentUser.role === 'admin') {
-                const adminBtn = document.getElementById('adminBtn');
-                const userRole = document.getElementById('userRole');
-                if (adminBtn) adminBtn.style.display = 'inline-block';
-                if (userRole) userRole.style.display = 'inline-block';
-            }
-        }
-
-        // Adaugă la funcția updateUI existentă
-        const originalUpdateUI = window.updateUI;
-        window.updateUI = function() {
-            originalUpdateUI();
-            updateUIAdmin();
-        }
-    </script>
 </body>
 </html>
