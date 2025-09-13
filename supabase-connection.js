@@ -200,18 +200,37 @@ async function handleRegister(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se înregistrează...';
     
     try {
-        const name = document.getElementById('registerName').value;
-        const email = document.getElementById('registerEmail').value;
+        // Verifică dacă supabase este disponibil
+        if (!supabase) {
+            throw new Error('Conexiunea cu serverul nu este disponibilă');
+        }
+        
+        const name = document.getElementById('registerName').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
         const password = document.getElementById('registerPassword').value;
         const userClass = parseInt(document.getElementById('registerClass').value);
         
         // Validări
+        if (!name || name.length < 2) {
+            throw new Error('Numele trebuie să aibă cel puțin 2 caractere');
+        }
+        
+        if (!email || !email.includes('@')) {
+            throw new Error('Email invalid');
+        }
+        
         if (password.length < 6) {
             throw new Error('Parola trebuie să aibă cel puțin 6 caractere');
         }
         
-        // Înregistrarea utilizatorului
-        const { data, error } = await supabase.auth.signUp({
+        if (!userClass || ![5, 6, 7, 8].includes(userClass)) {
+            throw new Error('Selectează o clasă validă');
+        }
+        
+        console.log('Încercare înregistrare:', { email, name, class: userClass });
+        
+        // Înregistrarea utilizatorului în Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -222,26 +241,66 @@ async function handleRegister(e) {
             }
         });
         
-        if (error) throw error;
-        
-        // Adăugarea în tabelul users după confirmarea email-ului
-        if (data.user && !data.user.email_confirmed_at) {
-            // Dacă Supabase necesită confirmarea email-ului
-            successDiv.textContent = 'Cont creat! Verifică email-ul pentru confirmare.';
-            successDiv.style.display = 'block';
-        } else {
-            // Dacă nu necesită confirmare, adaugă direct în tabel
-            await addUserToDatabase(data.user.id, email, name, userClass);
-            successDiv.textContent = 'Înregistrare reușită! Poți să te conectezi acum.';
-            successDiv.style.display = 'block';
+        if (authError) {
+            console.error('Auth error:', authError);
+            throw authError;
         }
         
-        // Resetarea formularului
-        document.getElementById('registerForm').reset();
+        console.log('Auth data:', authData);
+        
+        // Verifică dacă utilizatorul a fost creat
+        if (authData.user) {
+            // Adaugă utilizatorul în tabelul nostru
+            const { error: dbError } = await supabase
+                .from('users')
+                .insert([{
+                    id: authData.user.id,
+                    email: email,
+                    name: name,
+                    class: userClass
+                }]);
+            
+            if (dbError) {
+                console.error('Database error:', dbError);
+                // Nu aruncă eroare dacă utilizatorul există deja
+                if (!dbError.message.includes('duplicate') && !dbError.message.includes('already exists')) {
+                    throw new Error('Eroare la salvarea datelor: ' + dbError.message);
+                }
+            }
+            
+            if (authData.user.email_confirmed_at) {
+                successDiv.textContent = 'Înregistrare reușită! Poți să te conectezi acum.';
+                setTimeout(() => {
+                    closeModal('registerModal');
+                    openModal('loginModal');
+                }, 2000);
+            } else {
+                successDiv.textContent = 'Cont creat! Verifică emailul pentru confirmare.';
+            }
+            successDiv.style.display = 'block';
+            
+            // Resetarea formularului
+            document.getElementById('registerForm').reset();
+        } else {
+            throw new Error('Nu s-a putut crea contul');
+        }
         
     } catch (error) {
         console.error('Eroare la înregistrare:', error);
-        errorDiv.textContent = getErrorMessage(error.message);
+        let errorMessage = error.message || 'Eroare necunoscută';
+        
+        // Traduceri pentru erori comune
+        if (errorMessage.includes('fetch')) {
+            errorMessage = 'Nu se poate conecta la server. Verifică conexiunea la internet.';
+        } else if (errorMessage.includes('User already registered')) {
+            errorMessage = 'Există deja un cont cu acest email.';
+        } else if (errorMessage.includes('Invalid email')) {
+            errorMessage = 'Adresa de email nu este validă.';
+        } else if (errorMessage.includes('Password should be at least')) {
+            errorMessage = 'Parola trebuie să aibă cel puțin 6 caractere.';
+        }
+        
+        errorDiv.textContent = errorMessage;
         errorDiv.style.display = 'block';
     } finally {
         submitBtn.disabled = false;
