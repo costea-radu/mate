@@ -1,484 +1,319 @@
-// supabase-connection.js
-// Conexiunea la Supabase pentru platforma de matematică
-
-// Configurarea Supabase - ÎNLOCUIEȘTE CU DATELE TALE REALE
-const SUPABASE_URL = 'https://iswbotetinyfihfjnhvf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlzd2JvdGV0aW55ZmloZmpuaHZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NTMwMDQsImV4cCI6MjA3MzMyOTAwNH0.F8bqKnBVWTjfS8X0Leke5XRa_0OyhalgVvxKx7B6zgc';
+// Configurația Supabase
+// Înlocuiește cu datele tale din Supabase Dashboard
+const SUPABASE_URL = 'https://hwepdhwcctbpihnhchww.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3ZXBkaHdjY3RicGlobmhjaHd3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc3NTU2MDcsImV4cCI6MjA3MzMzMTYwN30.SsDkrmLePh4wb_KGm-C5Y2cdevRynjozGydXc9yTpHE';
 
 // Inițializarea clientului Supabase
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Variabile globale pentru starea aplicației
+// Variabile globale
 let currentUser = null;
-let userProfile = null;
 
-// ===========================================
-// FUNCȚII DE AUTENTIFICARE
-// ===========================================
+// Inițializarea aplicației
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthStatus();
+    setupEventListeners();
+    updateAuthRequiredLinks();
+});
 
-// Înregistrare utilizator nou
-async function registerUser(email, password, fullName, classLevel) {
+// Verificarea stării de autentificare
+async function checkAuthStatus() {
     try {
-        showLoading('registerSubmitBtn');
+        const { data: { session } } = await supabase.auth.getSession();
         
-        const { data, error } = await supabaseClient.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                    name: fullName,
-                    class_level: parseInt(classLevel)
-                }
-            }
-        });
-
-        if (error) throw error;
-
-        showAlert('Înregistrare reușită! Verifică-ți email-ul pentru confirmare.', 'success');
-        closeModal('registerModal');
-        
-        return data;
+        if (session) {
+            await loadUserData();
+            showUserInterface();
+        } else {
+            showAuthInterface();
+        }
     } catch (error) {
-        console.error('Eroare înregistrare:', error);
-        showError('registerError', error.message);
-        return null;
-    } finally {
-        hideLoading('registerSubmitBtn', '<i class="fas fa-user-plus"></i> Înregistrează-te');
+        console.error('Eroare la verificarea autentificării:', error);
+        showAuthInterface();
     }
 }
 
-// Conectare utilizator
-async function loginUser(email, password) {
+// Încărcarea datelor utilizatorului
+async function loadUserData() {
     try {
-        showLoading('loginSubmitBtn');
+        const { data, error } = await supabase.rpc('get_current_user');
         
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (error) throw error;
-
-        showAlert('Conectare reușită!', 'success');
-        closeModal('loginModal');
-        
-        return data;
-    } catch (error) {
-        console.error('Eroare conectare:', error);
-        showError('loginError', error.message);
-        return null;
-    } finally {
-        hideLoading('loginSubmitBtn', '<i class="fas fa-sign-in-alt"></i> Conectează-te');
-    }
-}
-
-// Deconectare utilizator
-async function logout() {
-    try {
-        const { error } = await supabaseClient.auth.signOut();
         if (error) throw error;
         
-        currentUser = null;
-        userProfile = null;
-        updateUIForAuth();
-        showAlert('Deconectare reușită!', 'info');
+        if (data && !data.error) {
+            currentUser = data;
+            updateUserInfo();
+        } else {
+            throw new Error(data?.error || 'Datele utilizatorului nu au fost găsite');
+        }
     } catch (error) {
-        console.error('Eroare deconectare:', error);
-        showAlert('Eroare la deconectare!', 'error');
+        console.error('Eroare la încărcarea datelor utilizatorului:', error);
+        showAlert('Eroare la încărcarea profilului', 'error');
     }
 }
 
-// ===========================================
-// FUNCȚII PENTRU PROFILUL UTILIZATORULUI
-// ===========================================
-
-// Obține profilul utilizatorului curent
-async function getCurrentUserProfile() {
-    try {
-        if (!currentUser) return null;
-
-        const { data, error } = await supabaseClient
-            .from('user_profiles')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Eroare obținere profil:', error);
-        return null;
+// Actualizarea interfeței cu informațiile utilizatorului
+function updateUserInfo() {
+    if (!currentUser) return;
+    
+    const userName = document.getElementById('userName');
+    const userRole = document.getElementById('userRole');
+    const adminBtn = document.getElementById('adminBtn');
+    const heroMessage = document.getElementById('heroMessage');
+    
+    if (userName) {
+        userName.textContent = currentUser.name;
+    }
+    
+    if (currentUser.is_admin) {
+        userRole.style.display = 'inline-block';
+        adminBtn.style.display = 'inline-block';
+    }
+    
+    if (heroMessage) {
+        heroMessage.textContent = `Bun venit înapoi, ${currentUser.name}! Continuă să înveți!`;
     }
 }
 
-// Actualizează profilul utilizatorului
-async function updateUserProfile(updates) {
-    try {
-        if (!currentUser) throw new Error('Utilizator neautentificat');
-
-        const { data, error } = await supabaseClient
-            .from('user_profiles')
-            .update(updates)
-            .eq('id', currentUser.id)
-            .select()
-            .single();
-
-        if (error) throw error;
-        
-        userProfile = data;
-        updateUIForAuth();
-        return data;
-    } catch (error) {
-        console.error('Eroare actualizare profil:', error);
-        return null;
-    }
-}
-
-// ===========================================
-// FUNCȚII PENTRU TESTE
-// ===========================================
-
-// Obține testele disponibile pentru clasa utilizatorului
-async function getAvailableTests() {
-    try {
-        if (!userProfile) await getCurrentUserProfile();
-        if (!userProfile) return [];
-
-        const { data, error } = await supabaseClient
-            .rpc('get_available_tests', {
-                p_class_level: userProfile.class_level
-            });
-
-        if (error) throw error;
-        return data || [];
-    } catch (error) {
-        console.error('Eroare obținere teste:', error);
-        return [];
-    }
-}
-
-// Începe un nou test
-async function startTest(testId) {
-    try {
-        if (!currentUser) throw new Error('Utilizator neautentificat');
-
-        // Obține detaliile testului
-        const { data: test, error: testError } = await supabaseClient
-            .from('tests')
-            .select('*')
-            .eq('id', testId)
-            .single();
-
-        if (testError) throw testError;
-
-        // Creează o nouă încercare
-        const { data, error } = await supabaseClient
-            .from('test_attempts')
-            .insert({
-                user_id: currentUser.id,
-                test_id: testId,
-                max_score: test.total_points
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Eroare începere test:', error);
-        return null;
-    }
-}
-
-// Salvează progresul testului
-async function saveTestProgress(attemptId, answers) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('test_attempts')
-            .update({ 
-                answers: answers,
-                time_spent_minutes: Math.floor((Date.now() - new Date().getTime()) / 60000)
-            })
-            .eq('id', attemptId)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Eroare salvare progres:', error);
-        return null;
-    }
-}
-
-// Finalizează testul
-async function submitTest(attemptId, answers, score) {
-    try {
-        const { data, error } = await supabaseClient
-            .from('test_attempts')
-            .update({
-                answers: answers,
-                score: score,
-                completed_at: new Date().toISOString(),
-                is_completed: true,
-                time_spent_minutes: Math.floor((Date.now() - new Date().getTime()) / 60000)
-            })
-            .eq('id', attemptId)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Eroare finalizare test:', error);
-        return null;
-    }
-}
-
-// ===========================================
-// FUNCȚII PENTRU CLASAMENT ȘI PROGRES
-// ===========================================
-
-// Obține clasamentul pentru clasa utilizatorului
-async function getClassLeaderboard(subjectType = null) {
-    try {
-        if (!userProfile) await getCurrentUserProfile();
-        if (!userProfile) return [];
-
-        const { data, error } = await supabaseClient
-            .rpc('get_class_ranking', {
-                p_class_level: userProfile.class_level,
-                p_subject_type: subjectType
-            });
-
-        if (error) throw error;
-        return data || [];
-    } catch (error) {
-        console.error('Eroare obținere clasament:', error);
-        return [];
-    }
-}
-
-// Obține progresul utilizatorului
-async function getUserProgress() {
-    try {
-        if (!currentUser) return [];
-
-        const { data, error } = await supabaseClient
-            .from('user_progress')
-            .select('*')
-            .eq('user_id', currentUser.id);
-
-        if (error) throw error;
-        return data || [];
-    } catch (error) {
-        console.error('Eroare obținere progres:', error);
-        return [];
-    }
-}
-
-// Obține statisticile utilizatorului
-async function getUserStats() {
-    try {
-        if (!currentUser) return null;
-
-        const { data, error } = await supabaseClient
-            .from('user_stats')
-            .select('*')
-            .eq('id', currentUser.id)
-            .single();
-
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('Eroare obținere statistici:', error);
-        return null;
-    }
-}
-
-// Obține istoricul testelor
-async function getTestHistory() {
-    try {
-        if (!currentUser) return [];
-
-        const { data, error } = await supabaseClient
-            .from('test_attempts')
-            .select(`
-                *,
-                tests (
-                    title,
-                    subject_type,
-                    class_level
-                )
-            `)
-            .eq('user_id', currentUser.id)
-            .eq('is_completed', true)
-            .order('completed_at', { ascending: false });
-
-        if (error) throw error;
-        return data || [];
-    } catch (error) {
-        console.error('Eroare obținere istoric:', error);
-        return [];
-    }
-}
-
-// ===========================================
-// FUNCȚII UI ȘI EVENT HANDLERS
-// ===========================================
-
-// Actualizează interfața în funcție de starea autentificării
-function updateUIForAuth() {
+// Afișarea interfeței pentru utilizatori autentificați
+function showUserInterface() {
     const authButtons = document.getElementById('authButtons');
     const userInfo = document.getElementById('userInfo');
-    const userName = document.getElementById('userName');
-    const heroMessage = document.getElementById('heroMessage');
-
-    if (currentUser && userProfile) {
-        // Utilizator autentificat
-        authButtons.style.display = 'none';
-        userInfo.classList.add('show');
-        userName.textContent = userProfile.name;
-        heroMessage.textContent = `Bun venit, ${userProfile.name}! Clasa a ${userProfile.class_level}-a`;
-        
-        // Elimină blocările pentru conținutul premium
-        document.querySelectorAll('[data-requires-auth="true"]').forEach(element => {
-            element.classList.remove('locked');
-            const lockIcon = element.querySelector('.auth-lock');
-            if (lockIcon) lockIcon.style.display = 'none';
-        });
-    } else {
-        // Utilizator neautentificat
-        authButtons.style.display = 'flex';
-        userInfo.classList.remove('show');
-        heroMessage.textContent = 'Alătură-te comunității noastre pentru a excela la matematică!';
-        
-        // Adaugă blocări pentru conținutul premium
-        document.querySelectorAll('[data-requires-auth="true"]').forEach(element => {
-            element.classList.add('locked');
-            const lockIcon = element.querySelector('.auth-lock');
-            if (lockIcon) lockIcon.style.display = 'inline';
-        });
-    }
+    
+    authButtons.style.display = 'none';
+    userInfo.classList.add('show');
+    
+    updateAuthRequiredLinks();
 }
 
-// Gestionarea formularelor
-function setupEventHandlers() {
-    // Formular de conectare
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        await loginUser(email, password);
-    });
+// Afișarea interfeței pentru utilizatori neautentificați
+function showAuthInterface() {
+    const authButtons = document.getElementById('authButtons');
+    const userInfo = document.getElementById('userInfo');
+    
+    authButtons.style.display = 'flex';
+    userInfo.classList.remove('show');
+    
+    updateAuthRequiredLinks();
+}
 
-    // Formular de înregistrare
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('registerName').value;
-        const email = document.getElementById('registerEmail').value;
-        const password = document.getElementById('registerPassword').value;
-        const classLevel = document.getElementById('registerClass').value;
-        await registerUser(email, password, name, classLevel);
-    });
-
-    // Verificarea accesului la conținut premium
-    document.addEventListener('click', (e) => {
-        const link = e.target.closest('[data-requires-auth="true"]');
-        if (link && link.classList.contains('locked')) {
-            e.preventDefault();
-            showAlert('Pentru a accesa această secțiune, te rugăm să te conectezi!', 'warning');
-            openModal('loginModal');
+// Actualizarea link-urilor care necesită autentificare
+function updateAuthRequiredLinks() {
+    const authRequiredLinks = document.querySelectorAll('[data-requires-auth="true"]');
+    
+    authRequiredLinks.forEach(link => {
+        if (currentUser) {
+            link.classList.remove('locked');
+            const lockIcon = link.querySelector('.auth-lock');
+            if (lockIcon) lockIcon.style.display = 'none';
+        } else {
+            link.classList.add('locked');
+            const lockIcon = link.querySelector('.auth-lock');
+            if (lockIcon) lockIcon.style.display = 'inline';
+            
+            // Adaugă event listener pentru click
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                showAlert('Trebuie să te conectezi pentru a accesa această secțiune', 'warning');
+                openModal('loginModal');
+            });
         }
     });
 }
 
-// Monitorizarea stării autentificării
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN') {
-        currentUser = session.user;
-        userProfile = await getCurrentUserProfile();
-        updateUIForAuth();
-    } else if (event === 'SIGNED_OUT') {
-        currentUser = null;
-        userProfile = null;
-        updateUIForAuth();
+// Configurarea event listener-ilor
+function setupEventListeners() {
+    // Formularul de conectare
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
     }
-});
-
-// ===========================================
-// FUNCȚII UTILITARE UI
-// ===========================================
-
-// Afișează mesaje de alertă
-function showAlert(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
     
-    document.body.appendChild(alertDiv);
+    // Formularul de înregistrare
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegister);
+    }
     
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
+    // Ascultarea schimbărilor în starea de autentificare
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN') {
+            await loadUserData();
+            showUserInterface();
+            closeAllModals();
+            showAlert('Conectare reușită!', 'success');
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null;
+            showAuthInterface();
+            showAlert('Te-ai deconectat cu succes!', 'info');
+        }
+    });
 }
 
-// Afișează erori în formular
-function showError(elementId, message) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.textContent = message;
-        errorElement.style.display = 'block';
+// Gestionarea conectării
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    const errorDiv = document.getElementById('loginError');
+    
+    // Resetarea erorilor
+    errorDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se conectează...';
+    
+    try {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) throw error;
+        
+        // Conectarea se va gestiona prin onAuthStateChange
+        
+    } catch (error) {
+        console.error('Eroare la conectare:', error);
+        errorDiv.textContent = getErrorMessage(error.message);
+        errorDiv.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Conectează-te';
     }
 }
 
-// Ascunde erorile din formular
-function hideError(elementId) {
-    const errorElement = document.getElementById(elementId);
-    if (errorElement) {
-        errorElement.style.display = 'none';
+// Gestionarea înregistrării
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('registerSubmitBtn');
+    const errorDiv = document.getElementById('registerError');
+    const successDiv = document.getElementById('registerSuccess');
+    
+    // Resetarea mesajelor
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se înregistrează...';
+    
+    try {
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const userClass = parseInt(document.getElementById('registerClass').value);
+        
+        // Validări
+        if (password.length < 6) {
+            throw new Error('Parola trebuie să aibă cel puțin 6 caractere');
+        }
+        
+        // Înregistrarea utilizatorului
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    name: name,
+                    class: userClass
+                }
+            }
+        });
+        
+        if (error) throw error;
+        
+        // Adăugarea în tabelul users după confirmarea email-ului
+        if (data.user && !data.user.email_confirmed_at) {
+            // Dacă Supabase necesită confirmarea email-ului
+            successDiv.textContent = 'Cont creat! Verifică email-ul pentru confirmare.';
+            successDiv.style.display = 'block';
+        } else {
+            // Dacă nu necesită confirmare, adaugă direct în tabel
+            await addUserToDatabase(data.user.id, email, name, userClass);
+            successDiv.textContent = 'Înregistrare reușită! Poți să te conectezi acum.';
+            successDiv.style.display = 'block';
+        }
+        
+        // Resetarea formularului
+        document.getElementById('registerForm').reset();
+        
+    } catch (error) {
+        console.error('Eroare la înregistrare:', error);
+        errorDiv.textContent = getErrorMessage(error.message);
+        errorDiv.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Înregistrează-te';
     }
 }
 
-// Afișează loading pe butoane
-function showLoading(buttonId) {
-    const button = document.getElementById(buttonId);
-    if (button) {
-        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se încarcă...';
-        button.disabled = true;
+// Adăugarea utilizatorului în baza de date
+async function addUserToDatabase(userId, email, name, userClass) {
+    const { error } = await supabase
+        .from('users')
+        .insert([
+            {
+                id: userId,
+                email: email,
+                name: name,
+                class: userClass
+            }
+        ]);
+    
+    if (error) throw error;
+}
+
+// Deconectarea
+async function logout() {
+    try {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+    } catch (error) {
+        console.error('Eroare la deconectare:', error);
+        showAlert('Eroare la deconectare', 'error');
     }
 }
 
-// Ascunde loading de pe butoane
-function hideLoading(buttonId, originalText) {
-    const button = document.getElementById(buttonId);
-    if (button) {
-        button.innerHTML = originalText;
-        button.disabled = false;
+// Navigarea către panoul admin
+function goToAdmin() {
+    if (currentUser && currentUser.is_admin) {
+        // Aici poți naviga către pagina admin
+        window.location.href = 'admin/admin.html';
+    } else {
+        showAlert('Nu ai permisiuni de administrator', 'error');
     }
 }
 
-// Deschide modal
+// Funcții pentru modal-uri
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('show');
-        // Curăță erorile anterioare
-        const errorElements = modal.querySelectorAll('.error-message');
-        errorElements.forEach(el => el.style.display = 'none');
     }
 }
 
-// Închide modal
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('show');
-        // Resetează formularul
-        const form = modal.querySelector('form');
-        if (form) form.reset();
     }
 }
+
+function closeAllModals() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.classList.remove('show');
+    });
+}
+
+// Închiderea modal-urilor la click pe fundal
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('show');
+    }
+});
 
 // Toggle pentru meniul mobil
 function toggleMobileMenu() {
@@ -486,98 +321,43 @@ function toggleMobileMenu() {
     navLinks.classList.toggle('active');
 }
 
-// Navigare către panoul admin (pentru utilizatori admin)
-function goToAdmin() {
-    // Implementează logica pentru panoul de administrare
-    window.location.href = '/admin';
-}
-
-// ===========================================
-// INIȚIALIZAREA APLICAȚIEI
-// ===========================================
-
-// Inițializarea când DOM-ul este încărcat
-document.addEventListener('DOMContentLoaded', async () => {
-    setupEventHandlers();
+// Afișarea alertelor
+function showAlert(message, type = 'info') {
+    // Eliminarea alertelor existente
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
     
-    // Verifică dacă utilizatorul este deja autentificat
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        userProfile = await getCurrentUserProfile();
-        updateUIForAuth();
-    }
-});
-
-// ===========================================
-// FUNCȚII PENTRU TESTE (pentru paginile de test)
-// ===========================================
-
-// Calcularea scorului pentru testele cu răspunsuri multiple
-function calculateMultipleChoiceScore(answers, correctAnswers) {
-    let score = 0;
-    const pointsPerQuestion = 6; // conform structurii din HTML
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
     
-    Object.keys(correctAnswers).forEach(questionId => {
-        if (answers[questionId] === correctAnswers[questionId]) {
-            score += pointsPerQuestion;
+    document.body.appendChild(alert);
+    
+    // Eliminarea automată după 5 secunde
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
         }
-    });
-    
-    return score;
+    }, 5000);
 }
 
-// Salvarea locală a progresului (backup)
-function saveProgressLocally(testId, answers) {
-    const progressKey = `test_progress_${testId}`;
-    const progressData = {
-        answers: answers,
-        timestamp: new Date().toISOString()
+// Traducerea mesajelor de eroare
+function getErrorMessage(error) {
+    const errorMessages = {
+        'Invalid login credentials': 'Email sau parolă incorectă',
+        'User already registered': 'Utilizatorul este deja înregistrat',
+        'Password should be at least 6 characters': 'Parola trebuie să aibă cel puțin 6 caractere',
+        'Invalid email': 'Email invalid',
+        'Email not confirmed': 'Email-ul nu a fost confirmat'
     };
-    localStorage.setItem(progressKey, JSON.stringify(progressData));
+    
+    return errorMessages[error] || error || 'A apărut o eroare neașteptată';
 }
 
-// Încărcarea progresului local
-function loadProgressLocally(testId) {
-    const progressKey = `test_progress_${testId}`;
-    const savedData = localStorage.getItem(progressKey);
-    return savedData ? JSON.parse(savedData) : null;
-}
-
-// Export pentru utilizare globală
-window.MathPlatform = {
-    // Auth
-    loginUser,
-    registerUser,
-    logout,
-    getCurrentUserProfile,
-    updateUserProfile,
-    
-    // Tests
-    getAvailableTests,
-    startTest,
-    saveTestProgress,
-    submitTest,
-    
-    // Progress & Rankings
-    getClassLeaderboard,
-    getUserProgress,
-    getUserStats,
-    getTestHistory,
-    
-    // Utils
-    calculateMultipleChoiceScore,
-    saveProgressLocally,
-    loadProgressLocally,
-    
-    // UI
-    showAlert,
-    openModal,
-    closeModal,
-    
-    // State
-    get currentUser() { return currentUser; },
-    get userProfile() { return userProfile; }
+// Export pentru utilizare în alte fișiere
+window.MateAuth = {
+    currentUser: () => currentUser,
+    isLoggedIn: () => !!currentUser,
+    isAdmin: () => currentUser && currentUser.is_admin,
+    logout: logout
 };
-
-console.log('🔗 Supabase connection initialized for Math Platform');
