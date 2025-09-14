@@ -475,6 +475,9 @@
             
             const score = Math.round((correctAnswers / questions.length) * 100);
             const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+
+            // Salvează nota în baza de date
+            const saved = await window.supabaseConnection.saveTestGrade(TEST_ID, score, timeSpent);
             
             // Afișează rezultatele
             showResults(score, correctAnswers, timeSpent);
