@@ -486,31 +486,25 @@
                 breakdown.push('Exercițiul 12c: ✗ (0p) - Corect: 24');
             }
 
-            // Display results
-            const resultDiv = document.getElementById('result');
-            const scoreText = document.getElementById('score-text');
-            const scoreBreakdown = document.getElementById('score-breakdown');
+                        // Calculează scorul
+            let correctAnswers = 0;
+            questions.forEach((q, i) => {
+                if (userAnswers[i] === q.correct) {
+                    correctAnswers++;
+                }
+            });
             
-            const percentage = (totalScore / maxScore) * 100;
+            const score = Math.round((correctAnswers / questions.length) * 100);
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
             
-            scoreText.innerHTML = `Punctaj total: ${totalScore.toFixed(1)} din ${maxScore} puncte (${percentage.toFixed(1)}%)`;
-            scoreBreakdown.innerHTML = breakdown.join('<br>');
+            console.log('Finalizare test:', {
+                user_id: currentUser.id,
+                test_id: TEST_ID,
+                score: score,
+                time_spent: timeSpent
+            });
             
-            // Set result class based on score
-            resultDiv.className = 'result-container';
-            if (percentage >= 85) {
-                resultDiv.classList.add('result-excellent');
-            } else if (percentage >= 70) {
-                resultDiv.classList.add('result-good');
-            } else {
-                resultDiv.classList.add('result-needs-improvement');
-            }
-            
-            resultDiv.style.display = 'block';
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
-        }
-        
-               // Salvează nota în baza de date
+            // Salvează nota în baza de date
             try {
                 // Verifică mai întâi dacă testul există
                 const { data: testExists, error: testError } = await supabase
@@ -527,10 +521,10 @@
                         .from('tests')
                         .insert({
                             id: TEST_ID,
-                            test_name: 'model test initial cls 6',
+                            test_name: 'Test Numere Naturale',
                             class: 5,
                             category: 'clasa',
-                            max_score: 10
+                            max_score: 100
                         })
                         .select()
                         .single();
@@ -573,6 +567,30 @@
             
             // Afișează rezultatele indiferent de salvare
             showResults(score, correctAnswers, timeSpent);
+        }
+
+            // Display results
+            const resultDiv = document.getElementById('result');
+            const scoreText = document.getElementById('score-text');
+            const scoreBreakdown = document.getElementById('score-breakdown');
+            
+            const percentage = (totalScore / maxScore) * 100;
+            
+            scoreText.innerHTML = `Punctaj total: ${totalScore.toFixed(1)} din ${maxScore} puncte (${percentage.toFixed(1)}%)`;
+            scoreBreakdown.innerHTML = breakdown.join('<br>');
+            
+            // Set result class based on score
+            resultDiv.className = 'result-container';
+            if (percentage >= 85) {
+                resultDiv.classList.add('result-excellent');
+            } else if (percentage >= 70) {
+                resultDiv.classList.add('result-good');
+            } else {
+                resultDiv.classList.add('result-needs-improvement');
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
