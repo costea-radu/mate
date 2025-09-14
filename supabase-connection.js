@@ -191,7 +191,7 @@ async function handleLogin(e) {
     
     try {
         // Hash-uiește parola pentru comparare
-        const hashedPassword = btoa(password); // Simplu pentru demo
+        const hashedPassword = btoa(password);
         
         // Verifică credențialele
         const { data, error } = await supabase
@@ -199,7 +199,7 @@ async function handleLogin(e) {
             .select('*')
             .eq('email', email)
             .eq('password_hash', hashedPassword)
-            .single();
+            .maybeSingle(); // Folosește maybeSingle pentru a evita eroarea când nu găsește
         
         if (error || !data) {
             throw new Error('Email sau parolă incorectă!');
@@ -227,7 +227,8 @@ async function handleLogin(e) {
         }
         
     } catch (error) {
-        loginError.textContent = error.message;
+        console.error('Eroare login:', error);
+        loginError.textContent = error.message || 'Email sau parolă incorectă!';
         loginError.style.display = 'block';
     } finally {
         loginSubmitBtn.disabled = false;
