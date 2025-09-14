@@ -381,217 +381,304 @@
     </div>
 
     <script>
+// Configurare Supabase
+const SUPABASE_URL = 'https://lyeyfrdhjqqiedngvlfe.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5ZXlmcmRoanFxaWVkbmd2bGZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzI1MTYsImV4cCI6MjA3MzQwODUxNn0.UuwwPDG0_7ad5IRdrVgQOhbE4Bni2v0YuShTNyngm2I';
 
-                // IMPORTANT: Înlocuiește cu datele tale Supabase
-        const SUPABASE_URL = 'https://lyeyfrdhjqqiedngvlfe.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5ZXlmcmRoanFxaWVkbmd2bGZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzI1MTYsImV4cCI6MjA3MzQwODUxNn0.UuwwPDG0_7ad5IRdrVgQOhbE4Bni2v0YuShTNyngm2I';
-        
-        // Inițializare Supabase
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // ID-ul testului - acesta trebuie să existe în tabelul 'tests' din Supabase
-        // Poți obține ID-ul din Supabase Dashboard după ce ai creat testul
-        const TEST_ID = '5b0ad902-3813-4788-8e08-334bbe4776c0'; 
+// Inițializare Supabase
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Store selected answers
-        let answers = {};
-        
-        function selectOption(element, questionId, value) {
-            // Remove selection from other options in the same question
-            const allOptions = element.parentNode.querySelectorAll('.option');
-            allOptions.forEach(opt => opt.classList.remove('selected'));
-            
-            // Add selection to clicked option
-            element.classList.add('selected');
-            
-            // Store answer
-            answers[questionId] = value;
-        }
-        
-        function calculateScore() {
-            let totalScore = 1; // 1 punct din oficiu
-            let maxScore = 10;
-            let breakdown = [];
-            
-            // Correct answers for Part I (0.5 points each)
-            const correctAnswers = {
-                'q1': 'A',  // 6,7 + 9,3 = 16,0
-                'q2': 'B',  // 4² - 2³ = 16 - 8 = 8
-                'q3': 'D',  // 4152 : 18 = 230 rest 12
-                'q4': 'A',  // 3/8 * 6 = 18/48
-                'q5': 'C',  // divizorii lui 12: 1,2,3,4,6,12
-                'q6': 'A',  // 2,48 este cel mai mare
-                'q7': 'B',  // 47/100 = 0,47
-                'q8': 'C',  // 750g = 0,75 kg
-                'q9': 'B'   // cub cu muchia 4,5 dm are 12 muchii: 12 * 4,5 = 54 dm
-            };
-            
-            // Check Part I answers
-            for (let i = 1; i <= 9; i++) {
-                const qId = 'q' + i;
-                if (answers[qId] === correctAnswers[qId]) {
-                    totalScore += 0.5;
-                    breakdown.push(`Exercițiul ${i}: ✓ (0.5p)`);
-                } else {
-                    breakdown.push(`Exercițiul ${i}: ✗ (0p) - Corect: ${correctAnswers[qId]}`);
-                }
-            }
-            
-            // Check Part II answers
-            const q10Answer = document.getElementById('q10_answer').value.trim();
-            if (q10Answer === '11/24') {
-                totalScore += 0.8;
-                breakdown.push('Exercițiul 10: ✓ (0.8p)');
-            } else {
-                breakdown.push('Exercițiul 10: ✗ (0p) - Corect: 11/24');
-            }
-            
-            const q11aAnswer = document.getElementById('q11a_answer').value.trim();
-            if (q11aAnswer === '0') {
-                totalScore += 0.7;
-                breakdown.push('Exercițiul 11a: ✓ (0.7p)');
-            } else {
-                breakdown.push('Exercițiul 11a: ✗ (0p) - Corect: 0');
-            }
-            
-            const q11bAnswer = document.getElementById('q11b_answer').value.trim();
-            if (q11bAnswer === '6') {
-                totalScore += 0.8;
-                breakdown.push('Exercițiul 11b: ✓ (0.8p)');
-            } else {
-                breakdown.push('Exercițiul 11b: ✗ (0p) - Corect: 6');
-            }
-            
-            const q12aAnswer = document.getElementById('q12a_answer').value.trim();
-            if (q12aAnswer === 'l=3 cm, L=15 cm' || q12aAnswer === 'l=3cm, L=15cm') {
-                totalScore += 0.8;
-                breakdown.push('Exercițiul 12a: ✓ (0.8p)');
-            } else {
-                breakdown.push('Exercițiul 12a: ✗ (0p) - Corect: l=3 cm, L=15 cm');
-            }
-            
-            const q12bAnswer = document.getElementById('q12b_answer').value.trim();
-            if (q12bAnswer === '45') {
-                totalScore += 0.7;
-                breakdown.push('Exercițiul 12b: ✓ (0.7p)');
-            } else {
-                breakdown.push('Exercițiul 12b: ✗ (0p) - Corect: 45');
-            }
-            
-            const q12cAnswer = document.getElementById('q12c_answer').value.trim();
-            if (q12cAnswer === '24') {
-                totalScore += 0.7;
-                breakdown.push('Exercițiul 12c: ✓ (0.7p)');
-            } else {
-                breakdown.push('Exercițiul 12c: ✗ (0p) - Corect: 24');
-            }
+// ID-ul testului (generează unul nou sau folosește unul existent)
+const TEST_ID = '5b0ad902-3813-4788-8e08-334bbe4776c0';
 
-                        // Calculează scorul
-            let correctAnswers = 0;
-            questions.forEach((q, i) => {
-                if (userAnswers[i] === q.correct) {
-                    correctAnswers++;
-                }
-            });
-            
-            const score = Math.round((correctAnswers / questions.length) * 100);
-            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
-            
-            console.log('Finalizare test:', {
-                user_id: currentUser.id,
-                test_id: TEST_ID,
-                score: score,
-                time_spent: timeSpent
-            });
-            
-            // Salvează nota în baza de date
-            try {
-                // Verifică mai întâi dacă testul există
-                const { data: testExists, error: testError } = await supabase
-                    .from('tests')
-                    .select('id')
-                    .eq('id', TEST_ID)
-                    .single();
-                
-                if (testError || !testExists) {
-                    console.error('Testul nu există în baza de date. Creez unul nou...');
-                    
-                    // Creează testul în baza de date
-                    const { data: newTest, error: createError } = await supabase
-                        .from('tests')
-                        .insert({
-                            id: TEST_ID,
-                            test_name: 'Test Numere Naturale',
-                            class: 5,
-                            category: 'clasa',
-                            max_score: 100
-                        })
-                        .select()
-                        .single();
-                    
-                    if (createError) {
-                        console.error('Eroare la crearea testului:', createError);
-                    } else {
-                        console.log('Test creat cu succes:', newTest);
-                    }
-                }
-                
-                // Salvează nota
-                const { data, error } = await supabase
-                    .from('grades')
-                    .insert({
-                        user_id: currentUser.id,
-                        test_id: TEST_ID,
-                        score: score,
-                        time_spent: timeSpent
-                    })
-                    .select();
-                
-                if (error) {
-                    if (error.code === '23505') {
-                        showAlert('Ai dat deja acest test!', 'warning');
-                        console.log('Test deja completat de acest utilizator');
-                    } else {
-                        console.error('Eroare la salvarea notei:', error);
-                        showAlert('Eroare la salvarea notei!', 'error');
-                    }
-                } else {
-                    console.log('Notă salvată cu succes:', data);
-                    showAlert(`Test finalizat! Nota ta: ${score}/100`, 'success');
-                }
-                
-            } catch (error) {
-                console.error('Eroare generală:', error);
-                showAlert('Eroare la salvarea rezultatului!', 'error');
-            }
-            
-            // Afișează rezultatele indiferent de salvare
-            showResults(score, correctAnswers, timeSpent);
+// Variabile globale
+let answers = {};
+let testStartTime = Date.now();
+
+// Funcție pentru selectarea opțiunilor la întrebările cu variante multiple
+function selectOption(element, questionId, value) {
+    // Elimină selecția de la celelalte opțiuni din aceeași întrebare
+    const allOptions = element.parentNode.querySelectorAll('.option');
+    allOptions.forEach(opt => opt.classList.remove('selected'));
+    
+    // Adaugă selecția la opțiunea selectată
+    element.classList.add('selected');
+    
+    // Stochează răspunsul
+    answers[questionId] = value;
+}
+
+// Funcție pentru calcularea scorului și salvarea în baza de date
+async function calculateScore() {
+    try {
+        // Verifică dacă utilizatorul este autentificat
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            showAlert('Trebuie să te conectezi pentru a salva rezultatele!', 'error');
+            return;
         }
 
-            // Display results
-            const resultDiv = document.getElementById('result');
-            const scoreText = document.getElementById('score-text');
-            const scoreBreakdown = document.getElementById('score-breakdown');
-            
-            const percentage = (totalScore / maxScore) * 100;
-            
-            scoreText.innerHTML = `Punctaj total: ${totalScore.toFixed(1)} din ${maxScore} puncte (${percentage.toFixed(1)}%)`;
-            scoreBreakdown.innerHTML = breakdown.join('<br>');
-            
-            // Set result class based on score
-            resultDiv.className = 'result-container';
-            if (percentage >= 85) {
-                resultDiv.classList.add('result-excellent');
-            } else if (percentage >= 70) {
-                resultDiv.classList.add('result-good');
+        let totalScore = 1; // 1 punct din oficiu
+        const maxScore = 10;
+        let breakdown = [];
+        
+        // Răspunsurile corecte pentru Partea I (0.5 puncte fiecare)
+        const correctAnswers = {
+            'q1': 'A',  // 6,7 + 9,3 = 16,0
+            'q2': 'B',  // 4² - 2³ = 16 - 8 = 8
+            'q3': 'D',  // 4152 : 18 = 230 rest 12
+            'q4': 'A',  // 3/8 * 6 = 18/48
+            'q5': 'C',  // divizorii lui 12: 1,2,3,4,6,12
+            'q6': 'A',  // 2,48 este cel mai mare
+            'q7': 'B',  // 47/100 = 0,47
+            'q8': 'C',  // 750g = 0,75 kg
+            'q9': 'B'   // cub cu muchia 4,5 dm are 12 muchii: 12 * 4,5 = 54 dm
+        };
+        
+        // Verifică răspunsurile din Partea I
+        for (let i = 1; i <= 9; i++) {
+            const qId = 'q' + i;
+            if (answers[qId] === correctAnswers[qId]) {
+                totalScore += 0.5;
+                breakdown.push(`Exercițiul ${i}: ✓ (0.5p)`);
             } else {
-                resultDiv.classList.add('result-needs-improvement');
+                breakdown.push(`Exercițiul ${i}: ✗ (0p) - Corect: ${correctAnswers[qId]}`);
             }
-            
-            resultDiv.style.display = 'block';
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
         }
+        
+        // Verifică răspunsurile din Partea a II-a
+        const q10Answer = document.getElementById('q10_answer')?.value.trim() || '';
+        if (q10Answer === '11/24') {
+            totalScore += 0.8;
+            breakdown.push('Exercițiul 10: ✓ (0.8p)');
+        } else {
+            breakdown.push('Exercițiul 10: ✗ (0p) - Corect: 11/24');
+        }
+        
+        const q11aAnswer = document.getElementById('q11a_answer')?.value.trim() || '';
+        if (q11aAnswer === '0') {
+            totalScore += 0.7;
+            breakdown.push('Exercițiul 11a: ✓ (0.7p)');
+        } else {
+            breakdown.push('Exercițiul 11a: ✗ (0p) - Corect: 0');
+        }
+        
+        const q11bAnswer = document.getElementById('q11b_answer')?.value.trim() || '';
+        if (q11bAnswer === '6') {
+            totalScore += 0.8;
+            breakdown.push('Exercițiul 11b: ✓ (0.8p)');
+        } else {
+            breakdown.push('Exercițiul 11b: ✗ (0p) - Corect: 6');
+        }
+        
+        const q12aAnswer = document.getElementById('q12a_answer')?.value.trim() || '';
+        if (q12aAnswer === 'l=3 cm, L=15 cm' || q12aAnswer === 'l=3cm, L=15cm') {
+            totalScore += 0.8;
+            breakdown.push('Exercițiul 12a: ✓ (0.8p)');
+        } else {
+            breakdown.push('Exercițiul 12a: ✗ (0p) - Corect: l=3 cm, L=15 cm');
+        }
+        
+        const q12bAnswer = document.getElementById('q12b_answer')?.value.trim() || '';
+        if (q12bAnswer === '45') {
+            totalScore += 0.7;
+            breakdown.push('Exercițiul 12b: ✓ (0.7p)');
+        } else {
+            breakdown.push('Exercițiul 12b: ✗ (0p) - Corect: 45');
+        }
+        
+        const q12cAnswer = document.getElementById('q12c_answer')?.value.trim() || '';
+        if (q12cAnswer === '24') {
+            totalScore += 0.7;
+            breakdown.push('Exercițiul 12c: ✓ (0.7p)');
+        } else {
+            breakdown.push('Exercițiul 12c: ✗ (0p) - Corect: 24');
+        }
+
+        // Calculează procentajul și timpul petrecut
+        const scorePercentage = Math.round((totalScore / maxScore) * 100);
+        const timeSpent = Math.floor((Date.now() - testStartTime) / 1000);
+        
+        // Salvează rezultatul în baza de date
+        await saveTestResult(currentUser.id, scorePercentage, timeSpent, totalScore, maxScore);
+        
+        // Afișează rezultatele
+        displayResults(totalScore, maxScore, scorePercentage, breakdown);
+        
+    } catch (error) {
+        console.error('Eroare la calcularea scorului:', error);
+        showAlert('Eroare la calcularea rezultatului!', 'error');
+    }
+}
+
+// Funcție pentru salvarea rezultatului în baza de date
+async function saveTestResult(userId, scorePercentage, timeSpent, totalScore, maxScore) {
+    try {
+        console.log('Salvare rezultat:', {
+            user_id: userId,
+            test_id: TEST_ID,
+            score: scorePercentage,
+            time_spent: timeSpent
+        });
+
+        // Verifică dacă testul există în baza de date
+        const { data: testExists, error: testError } = await supabase
+            .from('tests')
+            .select('id')
+            .eq('id', TEST_ID)
+            .single();
+        
+        if (testError || !testExists) {
+            console.log('Testul nu există în baza de date. Creez unul nou...');
+            
+            // Creează testul în baza de date
+            const { data: newTest, error: createError } = await supabase
+                .from('tests')
+                .insert({
+                    id: TEST_ID,
+                    test_name: 'Model test inițial Matematică - Clasa a 6-a',
+                    class: 6,
+                    category: 'test_initial',
+                    max_score: 100
+                })
+                .select()
+                .single();
+            
+            if (createError) {
+                console.error('Eroare la crearea testului:', createError);
+                throw createError;
+            } else {
+                console.log('Test creat cu succes:', newTest);
+            }
+        }
+        
+        // Verifică dacă utilizatorul a mai dat acest test
+        const { data: existingGrade, error: checkError } = await supabase
+            .from('grades')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('test_id', TEST_ID)
+            .single();
+        
+        if (existingGrade) {
+            // Actualizează nota existentă
+            const { data, error } = await supabase
+                .from('grades')
+                .update({
+                    score: scorePercentage,
+                    time_spent: timeSpent,
+                    completed_at: new Date().toISOString()
+                })
+                .eq('user_id', userId)
+                .eq('test_id', TEST_ID)
+                .select();
+            
+            if (error) {
+                console.error('Eroare la actualizarea notei:', error);
+                throw error;
+            } else {
+                console.log('Notă actualizată cu succes:', data);
+                showAlert(`Test finalizat! Nota actualizată: ${scorePercentage}/100 (${totalScore.toFixed(1)}/${maxScore} puncte)`, 'success');
+            }
+        } else {
+            // Salvează nota nouă
+            const { data, error } = await supabase
+                .from('grades')
+                .insert({
+                    user_id: userId,
+                    test_id: TEST_ID,
+                    score: scorePercentage,
+                    time_spent: timeSpent
+                })
+                .select();
+            
+            if (error) {
+                console.error('Eroare la salvarea notei:', error);
+                throw error;
+            } else {
+                console.log('Notă salvată cu succes:', data);
+                showAlert(`Test finalizat! Nota ta: ${scorePercentage}/100 (${totalScore.toFixed(1)}/${maxScore} puncte)`, 'success');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Eroare la salvarea în baza de date:', error);
+        showAlert('Eroare la salvarea rezultatului în baza de date!', 'error');
+        throw error;
+    }
+}
+
+// Funcție pentru afișarea rezultatelor
+function displayResults(totalScore, maxScore, percentage, breakdown) {
+    const resultDiv = document.getElementById('result');
+    const scoreText = document.getElementById('score-text');
+    const scoreBreakdown = document.getElementById('score-breakdown');
+    
+    if (resultDiv && scoreText && scoreBreakdown) {
+        scoreText.innerHTML = `Punctaj total: ${totalScore.toFixed(1)} din ${maxScore} puncte (${percentage}%)`;
+        scoreBreakdown.innerHTML = breakdown.join('<br>');
+        
+        // Setează clasa CSS în funcție de scor
+        resultDiv.className = 'result-container';
+        if (percentage >= 85) {
+            resultDiv.classList.add('result-excellent');
+        } else if (percentage >= 70) {
+            resultDiv.classList.add('result-good');
+        } else {
+            resultDiv.classList.add('result-needs-improvement');
+        }
+        
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Funcție pentru obținerea utilizatorului curent
+async function getCurrentUser() {
+    try {
+        // Această funcție ar trebui să returneze utilizatorul curent din sistemul de autentificare
+        // Presupun că ai un sistem de autentificare implementat
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error || !user) {
+            console.log('Utilizator neautentificat');
+            return null;
+        }
+        
+        return user;
+    } catch (error) {
+        console.error('Eroare la obținerea utilizatorului:', error);
+        return null;
+    }
+}
+
+// Funcție pentru afișarea alertelor
+function showAlert(message, type) {
+    // Elimină alertele existente
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Creează noua alertă
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+    
+    // Adaugă alerta în pagină
+    document.body.appendChild(alert);
+    
+    // Elimină alerta după 5 secunde
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.parentNode.removeChild(alert);
+        }
+    }, 5000);
+}
+
+// Inițializare când se încarcă pagina
+document.addEventListener('DOMContentLoaded', function() {
+    testStartTime = Date.now();
+    console.log('Test inițializat la:', new Date(testStartTime));
+});
     </script>
 </body>
 </html>
