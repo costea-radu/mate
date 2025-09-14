@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Matematică - Clasa a 5-a</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .test-header h1 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .timer {
+            font-size: 1.2rem;
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        .question {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9ff;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .answer-option {
+            padding: 1rem;
+            background: white;
+            border: 2px solid #e0e7ff;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .answer-option:hover {
+            background: #f0f4ff;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .answer-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .answer-option.selected {
+            background: #e0e7ff;
+            border-color: #667eea;
+        }
+
+        .test-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e0e7ff;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e7ff;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .results {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-message {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .score-excellent { color: #38a169; }
+        .score-good { color: #3182ce; }
+        .score-average { color: #d69e2e; }
+        .score-poor { color: #e53e3e; }
+
+        .answer-review {
+            text-align: left;
+            margin-top: 2rem;
+        }
+
+        .review-item {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9ff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .review-item.correct {
+            border-left: 4px solid #38a169;
+        }
+
+        .review-item.incorrect {
+            border-left: 4px solid #e53e3e;
+        }
+
+        .time-warning {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 1500;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #38a169, #48bb78);
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #e53e3e, #f56565);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #d69e2e, #ecc94b);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .test-container {
+                padding: 1.5rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .test-controls {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <!-- Header Test -->
+        <div class="test-header">
+            <h1><i class="fas fa-clipboard-check"></i> Test Numere Naturale</h1>
+            <p>Clasa a 5-a • 10 întrebări • 10 minute</p>
+            <div class="timer">
+                <i class="fas fa-clock"></i> Timp rămas: <span id="timeLeft">10:00</span>
+            </div>
+        </div>
+
+        <!-- Bară de progres -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar" style="width: 10%"></div>
+        </div>
+
+        <!-- Zona de test -->
+        <div id="testContent">
+            <!-- Întrebările vor fi afișate aici -->
+        </div>
+
+        <!-- Controale test -->
+        <div class="test-controls">
+            <button class="btn btn-secondary" onclick="previousQuestion()" id="prevBtn" disabled>
+                <i class="fas fa-arrow-left"></i> Înapoi
+            </button>
+            <span id="questionCounter">Întrebarea 1 din 10</span>
+            <button class="btn btn-primary" onclick="nextQuestion()" id="nextBtn">
+                Următoarea <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Rezultate -->
+        <div class="results" id="results">
+            <h2><i class="fas fa-trophy"></i> Test Finalizat!</h2>
+            <div class="score-display" id="finalScore">0/100</div>
+            <p class="score-message" id="scoreMessage">Felicitări!</p>
+            <div class="answer-review" id="answerReview"></div>
+            <button class="btn btn-primary" onclick="goHome()">
+                <i class="fas fa-home"></i> Înapoi la pagina principală
+            </button>
+            <button class="btn btn-secondary" onclick="restartTest()">
+                <i class="fas fa-redo"></i> Ia testul din nou
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // IMPORTANT: Înlocuiește cu datele tale Supabase
+        const SUPABASE_URL = 'https://YOUR_PROJECT_URL.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+        
+        // Inițializare Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // ID-ul testului - acesta trebuie să existe în tabelul 'tests' din Supabase
+        // Poți obține ID-ul din Supabase Dashboard după ce ai creat testul
+        const TEST_ID = 'be45c45c-b5ab-441d-99b4-2ee98a822720'; 
+        
+        // Întrebările testului
+        const questions = [
+            {
+                question: "Care este rezultatul calculului: 45 + 37?",
+                answers: ["82", "72", "92", "62"],
+                correct: 0
+            },
+            {
+                question: "Care este cel mai mare număr natural de 3 cifre?",
+                answers: ["900", "999", "1000", "998"],
+                correct: 1
+            },
+            {
+                question: "Calculează: 15 × 4",
+                answers: ["45", "50", "60", "55"],
+                correct: 2
+            },
+            {
+                question: "Care este rezultatul împărțirii: 84 ÷ 7?",
+                answers: ["11", "12", "13", "14"],
+                correct: 1
+            },
+            {
+                question: "Rotunjește numărul 567 la sute:",
+                answers: ["500", "600", "550", "570"],
+                correct: 1
+            },
+            {
+                question: "Care este predecesorul numărului 1000?",
+                answers: ["999", "1001", "900", "990"],
+                correct: 0
+            },
+            {
+                question: "Calculează: 23 × 10",
+                answers: ["203", "230", "2300", "23"],
+                correct: 1
+            },
+            {
+                question: "Care dintre următoarele numere este par?",
+                answers: ["71", "93", "86", "55"],
+                correct: 2
+            },
+            {
+                question: "Scrie cu cifre: trei mii patru sute douăzeci și unu",
+                answers: ["3421", "3241", "3412", "3214"],
+                correct: 0
+            },
+            {
+                question: "Care este suma numerelor 125 și 275?",
+                answers: ["300", "350", "400", "450"],
+                correct: 2
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = [];
+        let startTime = Date.now();
+        let timerInterval;
+        let timeLimit = 10 * 60; // 10 minute în secunde
+        let currentUser = null;
+
+        // Inițializare test
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verifică utilizatorul din localStorage
+            const sessionData = localStorage.getItem('userSession');
+            if (!sessionData) {
+                showAlert('Trebuie să fii conectat pentru a da acest test!', 'error');
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 2000);
+                return;
+            }
+            
+            currentUser = JSON.parse(sessionData);
+            console.log('Utilizator conectat:', currentUser.name);
+            
+            // Pornește timer-ul
+            startTimer();
+            
+            // Afișează prima întrebare
+            showQuestion();
+        });
+
+        // Funcție pentru afișarea alertelor
+        function showAlert(message, type = 'success') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // Pornește timer-ul
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLimit--;
+                
+                const minutes = Math.floor(timeLimit / 60);
+                const seconds = timeLimit % 60;
+                const timeElement = document.getElementById('timeLeft');
+                timeElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Avertisment timp
+                if (timeLimit <= 60) {
+                    timeElement.parentElement.classList.add('time-warning');
+                }
+                
+                if (timeLimit <= 0) {
+                    clearInterval(timerInterval);
+                    finishTest();
+                }
+            }, 1000);
+        }
+
+        // Afișează întrebarea curentă
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            const testContent = document.getElementById('testContent');
+            
+            testContent.innerHTML = `
+                <div class="question">
+                    <h3>Întrebarea ${currentQuestion + 1}: ${question.question}</h3>
+                    <div class="answers">
+                        ${question.answers.map((answer, index) => `
+                            <label class="answer-option ${userAnswers[currentQuestion] === index ? 'selected' : ''}">
+                                <input type="radio" name="answer" value="${index}" 
+                                    ${userAnswers[currentQuestion] === index ? 'checked' : ''}
+                                    onchange="selectAnswer(${index})">
+                                <span>${answer}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            // Actualizează contorul și bara de progres
+            document.getElementById('questionCounter').textContent = 
+                `Întrebarea ${currentQuestion + 1} din ${questions.length}`;
+            document.getElementById('progressBar').style.width = 
+                `${((currentQuestion + 1) / questions.length) * 100}%`;
+            
+            // Actualizează butoanele
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentQuestion === questions.length - 1) {
+                nextBtn.innerHTML = '<i class="fas fa-check"></i> Finalizează Test';
+            } else {
+                nextBtn.innerHTML = 'Următoarea <i class="fas fa-arrow-right"></i>';
+            }
+        }
+
+        // Selectează răspuns
+        function selectAnswer(index) {
+            userAnswers[currentQuestion] = index;
+            
+            // Actualizează vizual opțiunile
+            document.querySelectorAll('.answer-option').forEach((option, i) => {
+                option.classList.toggle('selected', i === index);
+            });
+        }
+
+        // Întrebare anterioară
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        // Întrebare următoare
+        function nextQuestion() {
+            if (userAnswers[currentQuestion] === undefined) {
+                alert('Te rugăm să selectezi un răspuns!');
+                return;
+            }
+            
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                finishTest();
+            }
+        }
+
+        // Finalizează testul
+        async function finishTest() {
+            clearInterval(timerInterval);
+            
+            // Calculează scorul
+            let correctAnswers = 0;
+            questions.forEach((q, i) => {
+                if (userAnswers[i] === q.correct) {
+                    correctAnswers++;
+                }
+            });
+            
+            const score = Math.round((correctAnswers / questions.length) * 100);
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            
+            console.log('Finalizare test:', {
+                user_id: currentUser.id,
+                test_id: TEST_ID,
+                score: score,
+                time_spent: timeSpent
+            });
+            
+            // Salvează nota în baza de date
+            try {
+                // Verifică mai întâi dacă testul există
+                const { data: testExists, error: testError } = await supabase
+                    .from('tests')
+                    .select('id')
+                    .eq('id', TEST_ID)
+                    .single();
+                
+                if (testError || !testExists) {
+                    console.error('Testul nu există în baza de date. Creez unul nou...');
+                    
+                    // Creează testul în baza de date
+                    const { data: newTest, error: createError } = await supabase
+                        .from('tests')
+                        .insert({
+                            id: TEST_ID,
+                            test_name: 'Test Numere Naturale',
+                            class: 5,
+                            category: 'clasa',
+                            max_score: 100
+                        })
+                        .select()
+                        .single();
+                    
+                    if (createError) {
+                        console.error('Eroare la crearea testului:', createError);
+                    } else {
+                        console.log('Test creat cu succes:', newTest);
+                    }
+                }
+                
+                // Salvează nota
+                const { data, error } = await supabase
+                    .from('grades')
+                    .insert({
+                        user_id: currentUser.id,
+                        test_id: TEST_ID,
+                        score: score,
+                        time_spent: timeSpent
+                    })
+                    .select();
+                
+                if (error) {
+                    if (error.code === '23505') {
+                        showAlert('Ai dat deja acest test!', 'warning');
+                        console.log('Test deja completat de acest utilizator');
+                    } else {
+                        console.error('Eroare la salvarea notei:', error);
+                        showAlert('Eroare la salvarea notei!', 'error');
+                    }
+                } else {
+                    console.log('Notă salvată cu succes:', data);
+                    showAlert(`Test finalizat! Nota ta: ${score}/100`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('Eroare generală:', error);
+                showAlert('Eroare la salvarea rezultatului!', 'error');
+            }
+            
+            // Afișează rezultatele indiferent de salvare
+            showResults(score, correctAnswers, timeSpent);
+        }
+
+        // Afișează rezultatele
+        function showResults(score, correctAnswers, timeSpent) {
+            // Ascunde testul
+            document.getElementById('testContent').style.display = 'none';
+            document.querySelector('.test-controls').style.display = 'none';
+            document.querySelector('.progress-bar').style.display = 'none';
+            
+            // Afișează rezultatele
+            const results = document.getElementById('results');
+            results.classList.add('show');
+            
+            document.getElementById('finalScore').textContent = `${score}/100`;
+            
+            // Mesaj bazat pe scor
+            const messageEl = document.getElementById('scoreMessage');
+            if (score >= 90) {
+                messageEl.textContent = 'Excelent! Performanță remarcabilă!';
+                messageEl.className = 'score-message score-excellent';
+            } else if (score >= 70) {
+                messageEl.textContent = 'Foarte bine! Continuă tot așa!';
+                messageEl.className = 'score-message score-good';
+            } else if (score >= 50) {
+                messageEl.textContent = 'Bine! Mai exersează pentru rezultate mai bune.';
+                messageEl.className = 'score-message score-average';
+            } else {
+                messageEl.textContent = 'Mai încearcă! Repetă lecțiile și revino.';
+                messageEl.className = 'score-message score-poor';
+            }
+            
+            // Afișează review-ul răspunsurilor
+            const reviewHTML = questions.map((q, i) => {
+                const isCorrect = userAnswers[i] === q.correct;
+                const userAnswer = userAnswers[i] !== undefined ? q.answers[userAnswers[i]] : 'Fără răspuns';
+                
+                return `
+                    <div class="review-item ${isCorrect ? 'correct' : 'incorrect'}">
+                        <i class="fas ${isCorrect ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                        <div>
+                            <strong>Întrebarea ${i + 1}:</strong> ${q.question}<br>
+                            <small>Răspunsul tău: ${userAnswer}</small>
+                            ${!isCorrect ? `<br><small style="color: #38a169;">Răspuns corect: ${q.answers[q.correct]}</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('answerReview').innerHTML = reviewHTML;
+            
+            // Afișează statistici în consolă
+            const timeMinutes = Math.floor(timeSpent / 60);
+            const timeSeconds = timeSpent % 60;
+            
+            console.log(`Rezultat final:
+            Utilizator: ${currentUser.name}
+            Scor: ${score}/100 (${correctAnswers}/${questions.length} răspunsuri corecte)
+            Timp: ${timeMinutes}:${timeSeconds.toString().padStart(2, '0')}`);
+        }
+
+        // Restart test
+        function restartTest() {
+            if (!confirm('Atenție! Dacă ai dat deja testul, nota nu se va înregistra din nou. Vrei să continui?')) {
+                return;
+            }
+            
+            currentQuestion = 0;
+            userAnswers = [];
+            startTime = Date.now();
+            timeLimit = 10 * 60;
+            
+            // Resetează interfața
+            document.getElementById('testContent').style.display = 'block';
+            document.querySelector('.test-controls').style.display = 'flex';
+            document.querySelector('.progress-bar').style.display = 'block';
+            document.getElementById('results').classList.remove('show');
+            
+            const timerElement = document.querySelector('.timer');
+            if (timerElement.classList.contains('time-warning')) {
+                timerElement.classList.remove('time-warning');
+            }
+            
+            // Restart timer și afișează prima întrebare
+            startTimer();
+            showQuestion();
+        }
+
+        // Înapoi la pagina principală
+        function goHome() {
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>
