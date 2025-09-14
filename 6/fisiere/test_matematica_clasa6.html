@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Model test inițial Matematică - Clasa a 6-a</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Times New Roman', serif;
@@ -483,7 +485,72 @@
             } else {
                 breakdown.push('Exercițiul 12c: ✗ (0p) - Corect: 24');
             }
+
+               // Salvează nota în baza de date
+            try {
+                // Verifică mai întâi dacă testul există
+                const { data: testExists, error: testError } = await supabase
+                    .from('tests')
+                    .select('id')
+                    .eq('id', TEST_ID)
+                    .single();
+                
+                if (testError || !testExists) {
+                    console.error('Testul nu există în baza de date. Creez unul nou...');
+                    
+                    // Creează testul în baza de date
+                    const { data: newTest, error: createError } = await supabase
+                        .from('tests')
+                        .insert({
+                            id: TEST_ID,
+                            test_name: 'model test initial cls 6',
+                            class: 5,
+                            category: 'clasa',
+                            max_score: 10
+                        })
+                        .select()
+                        .single();
+                    
+                    if (createError) {
+                        console.error('Eroare la crearea testului:', createError);
+                    } else {
+                        console.log('Test creat cu succes:', newTest);
+                    }
+                }
+                
+                // Salvează nota
+                const { data, error } = await supabase
+                    .from('grades')
+                    .insert({
+                        user_id: currentUser.id,
+                        test_id: TEST_ID,
+                        score: score,
+                        time_spent: timeSpent
+                    })
+                    .select();
+                
+                if (error) {
+                    if (error.code === '23505') {
+                        showAlert('Ai dat deja acest test!', 'warning');
+                        console.log('Test deja completat de acest utilizator');
+                    } else {
+                        console.error('Eroare la salvarea notei:', error);
+                        showAlert('Eroare la salvarea notei!', 'error');
+                    }
+                } else {
+                    console.log('Notă salvată cu succes:', data);
+                    showAlert(`Test finalizat! Nota ta: ${score}/100`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('Eroare generală:', error);
+                showAlert('Eroare la salvarea rezultatului!', 'error');
+            }
             
+            // Afișează rezultatele indiferent de salvare
+            showResults(score, correctAnswers, timeSpent);
+        }
+
             // Display results
             const resultDiv = document.getElementById('result');
             const scoreText = document.getElementById('score-text');
