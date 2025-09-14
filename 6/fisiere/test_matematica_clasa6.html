@@ -486,6 +486,30 @@
                 breakdown.push('Exercițiul 12c: ✗ (0p) - Corect: 24');
             }
 
+            // Display results
+            const resultDiv = document.getElementById('result');
+            const scoreText = document.getElementById('score-text');
+            const scoreBreakdown = document.getElementById('score-breakdown');
+            
+            const percentage = (totalScore / maxScore) * 100;
+            
+            scoreText.innerHTML = `Punctaj total: ${totalScore.toFixed(1)} din ${maxScore} puncte (${percentage.toFixed(1)}%)`;
+            scoreBreakdown.innerHTML = breakdown.join('<br>');
+            
+            // Set result class based on score
+            resultDiv.className = 'result-container';
+            if (percentage >= 85) {
+                resultDiv.classList.add('result-excellent');
+            } else if (percentage >= 70) {
+                resultDiv.classList.add('result-good');
+            } else {
+                resultDiv.classList.add('result-needs-improvement');
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+        
                // Salvează nota în baza de date
             try {
                 // Verifică mai întâi dacă testul există
@@ -549,30 +573,6 @@
             
             // Afișează rezultatele indiferent de salvare
             showResults(score, correctAnswers, timeSpent);
-        }
-
-            // Display results
-            const resultDiv = document.getElementById('result');
-            const scoreText = document.getElementById('score-text');
-            const scoreBreakdown = document.getElementById('score-breakdown');
-            
-            const percentage = (totalScore / maxScore) * 100;
-            
-            scoreText.innerHTML = `Punctaj total: ${totalScore.toFixed(1)} din ${maxScore} puncte (${percentage.toFixed(1)}%)`;
-            scoreBreakdown.innerHTML = breakdown.join('<br>');
-            
-            // Set result class based on score
-            resultDiv.className = 'result-container';
-            if (percentage >= 85) {
-                resultDiv.classList.add('result-excellent');
-            } else if (percentage >= 70) {
-                resultDiv.classList.add('result-good');
-            } else {
-                resultDiv.classList.add('result-needs-improvement');
-            }
-            
-            resultDiv.style.display = 'block';
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
