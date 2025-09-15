@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Inițial - Clasa a 6-a</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .question {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .option:hover {
+            background-color: #f0f4ff;
+        }
+
+        .option input[type="radio"] {
+            margin: 0;
+        }
+
+        .option label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .work-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .scratch-pad {
+            background: #f9f9f9;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 150px;
+            position: relative;
+        }
+
+        .scratch-pad::before {
+            content: "Spațiu de lucru";
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            color: #999;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .answer-box {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .answer-box label {
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+        }
+
+        .answer-box input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .answer-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 2rem auto 0;
+            min-width: 200px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-warning {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .result {
+            display: none;
+            background: linear-gradient(135deg, #38a169, #48bb78);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 0.2rem;
+            vertical-align: middle;
+        }
+
+        .fraction .numerator {
+            border-bottom: 1px solid #333;
+            padding-bottom: 1px;
+        }
+
+        .fraction .denominator {
+            padding-top: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .work-area {
+                grid-template-columns: 1fr;
+            }
+
+            .timer {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">
+        <i class="fas fa-clock"></i> Timp: <span id="time">00:00</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-calculator"></i> Test Inițial</h1>
+            <p><strong>Matematică - Clasa a 6-a</strong></p>
+            <p><em>Se acordă 1 punct din oficiu.</em></p>
+        </div>
+
+        <div id="authWarning" class="auth-warning" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Atenție!</strong> Trebuie să fii conectat pentru a putea da testul și a salva rezultatul.
+            <a href="../index.html" style="color: white; text-decoration: underline;">Mergi la pagina principală pentru a te conecta</a>
+        </div>
+
+        <form id="testForm">
+            <!-- Partea I -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-list"></i>
+                    Partea I – Încercuiți litera corespunzătoare singurului răspuns corect:
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 1. Suma numerelor 3,6 și 4,8 este egală cu:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q1a" name="q1" value="A">
+                            <label for="q1a">A. 8,4;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q1b" name="q1" value="B">
+                            <label for="q1b">B. 7,14;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q1c" name="q1" value="C">
+                            <label for="q1c">C. 8,14;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q1d" name="q1" value="D">
+                            <label for="q1d">D. 7,4.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 2. Rezultatul calculului 4² - 3² este egal cu:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q2a" name="q2" value="A">
+                            <label for="q2a">A. 7;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q2b" name="q2" value="B">
+                            <label for="q2b">B. 1;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q2c" name="q2" value="C">
+                            <label for="q2c">C. 25;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q2d" name="q2" value="D">
+                            <label for="q2d">D. 49.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 3. Precizați câtul și restul împărțirii 1728 : 12:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q3a" name="q3" value="A">
+                            <label for="q3a">A. c = 144, r = 0;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q3b" name="q3" value="B">
+                            <label for="q3b">B. c = 143, r = 12;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q3c" name="q3" value="C">
+                            <label for="q3c">C. c = 144, r = 12;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q3d" name="q3" value="D">
+                            <label for="q3d">D. c = 143, r = 0.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 4. Amplificând cu 3 fracția <span class="fraction"><span class="numerator">4</span><span class="denominator">8</span></span>, obținem fracția:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q4a" name="q4" value="A">
+                            <label for="q4a">A. <span class="fraction"><span class="numerator">12</span><span class="denominator">24</span></span>;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q4b" name="q4" value="B">
+                            <label for="q4b">B. <span class="fraction"><span class="numerator">7</span><span class="denominator">11</span></span>;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q4c" name="q4" value="C">
+                            <label for="q4c">C. <span class="fraction"><span class="numerator">12</span><span class="denominator">11</span></span>;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q4d" name="q4" value="D">
+                            <label for="q4d">D. <span class="fraction"><span class="numerator">4</span><span class="denominator">24</span></span>.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 5. Divizorii numărului natural 12 sunt:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q5a" name="q5" value="A">
+                            <label for="q5a">A. 1, 2, 12;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q5b" name="q5" value="B">
+                            <label for="q5b">B. 2, 6;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q5c" name="q5" value="C">
+                            <label for="q5c">C. 1, 2, 3, 4, 6, 12;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q5d" name="q5" value="D">
+                            <label for="q5d">D. 0, 1, 12.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 6. Dintre fracțiile zecimale 2,35; 2,4(5); 2,(45) și 2,44 cea mai mare este:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q6a" name="q6" value="A">
+                            <label for="q6a">A. 2,44;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q6b" name="q6" value="B">
+                            <label for="q6b">B. 2,4(5);</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q6c" name="q6" value="C">
+                            <label for="q6c">C. 2,(45);</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q6d" name="q6" value="D">
+                            <label for="q6d">D. 2,35.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 7. Transformând fracția ordinară <span class="fraction"><span class="numerator">37</span><span class="denominator">100</span></span> în fracție zecimală, obținem:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q7a" name="q7" value="A">
+                            <label for="q7a">A. 3,7;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q7b" name="q7" value="B">
+                            <label for="q7b">B. 0,37;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q7c" name="q7" value="C">
+                            <label for="q7c">C. 0,037;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q7d" name="q7" value="D">
+                            <label for="q7d">D. 37,0.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 8. Transformând în kilograme 750 g, obținem:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q8a" name="q8" value="A">
+                            <label for="q8a">A. 7,5 kg;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q8b" name="q8" value="B">
+                            <label for="q8b">B. 75 kg;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q8c" name="q8" value="C">
+                            <label for="q8c">C. 0,75 kg;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q8d" name="q8" value="D">
+                            <label for="q8d">D. 7500 kg.</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,5p) 9. Suma lungimilor muchiilor unui cub cu muchia de 2,5 dm este egală cu:</div>
+                    <div class="options">
+                        <div class="option">
+                            <input type="radio" id="q9a" name="q9" value="A">
+                            <label for="q9a">A. 25 dm;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q9b" name="q9" value="B">
+                            <label for="q9b">B. 30 dm;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q9c" name="q9" value="C">
+                            <label for="q9c">C. 22,5 dm;</label>
+                        </div>
+                        <div class="option">
+                            <input type="radio" id="q9d" name="q9" value="D">
+                            <label for="q9d">D. 27,5 dm.</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Partea II -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Partea a II-a – La următoarele probleme se cer rezolvări complete:
+                </div>
+
+                <div class="question">
+                    <div class="question-text">(0,8p) 1. Calculați: <span class="fraction"><span class="numerator">2</span><span class="denominator">3</span></span> - (<span class="fraction"><span class="numerator">5</span><span class="denominator">12</span></span> - <span class="fraction"><span class="numerator">1</span><span class="denominator">4</span></span>) · <span class="fraction"><span class="numerator">4</span><span class="denominator">7</span></span>.</div>
+                    <div class="work-area">
+                        <div class="scratch-pad"></div>
+                        <div class="answer-box">
+                            <label>Răspuns final:</label>
+                            <input type="text" id="answer1" placeholder="Ex: 2/3 sau 0,5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">2. Se consideră numărul natural 1260x.</div>
+                    <div style="margin-left: 1rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <div class="question-text">(0,7p) a) Determinați cifra x pentru care numărul 1260x devine cel mai mic număr de această formă divizibil cu 4.</div>
+                            <div class="work-area">
+                                <div class="scratch-pad"></div>
+                                <div class="answer-box">
+                                    <label>x =</label>
+                                    <input type="number" id="answer2a" min="0" max="9">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="question-text">(0,8p) b) Determinați cifra x pentru care numărul 1260x devine cel mai mare număr de această formă divizibil cu 3.</div>
+                            <div class="work-area">
+                                <div class="scratch-pad"></div>
+                                <div class="answer-box">
+                                    <label>x =</label>
+                                    <input type="number" id="answer2b" min="0" max="9">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="question">
+                    <div class="question-text">3. Un dreptunghi cu L = 5l are perimetrul egal cu 36 cm. Calculați:</div>
+                    <div style="margin-left: 1rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <div class="question-text">(0,8p) a) lățimea și lungimea dreptunghiului;</div>
+                            <div class="work-area">
+                                <div class="scratch-pad"></div>
+                                <div class="answer-box">
+                                    <label>l =</label>
+                                    <input type="text" id="answer3a1" placeholder="cm">
+                                    <label>L =</label>
+                                    <input type="text" id="answer3a2" placeholder="cm">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div class="question-text">(0,7p) b) aria dreptunghiului;</div>
+                            <div class="work-area">
+                                <div class="scratch-pad"></div>
+                                <div class="answer-box">
+                                    <label>Aria =</label>
+                                    <input type="number" id="answer3b" placeholder="cm²">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="question-text">(0,7p) c) perimetrul pătratului care are aria egală cu aria dreptunghiului.</div>
+                            <div class="work-area">
+                                <div class="scratch-pad"></div>
+                                <div class="answer-box">
+                                    <label>Perimetrul =</label>
+                                    <input type="number" id="answer3c" placeholder="cm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> Finalizează Testul
+            </button>
+        </form>
+
+        <div class="result" id="result">
+            <h2><i class="fas fa-trophy"></i> Rezultatul tău</h2>
+            <p id="scoreText"></p>
+            <p id="gradeText"></p>
+            <p><strong>Timp total:</strong> <span id="finalTime"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Configurare Supabase
+        const SUPABASE_URL = 'https://lyeyfrdhjqqiedngvlfe.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5ZXlmcmRoanFxaWVkbmd2bGZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4MzI1MTYsImV4cCI6MjA3MzQwODUxNn0.UuwwPDG0_7ad5IRdrVgQOhbE4Bni2v0YuShTNyngm2I';
+        const TEST_ID = '5b0ad902-3813-4788-8e08-334bbe4776c0';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Variabile pentru cronometru
+        let startTime = Date.now();
+        let timerInterval;
+        let currentUser = null;
+
+        // Verifică utilizatorul la încărcare
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUser();
+            startTimer();
+            setupForm();
+        });
+
+        function checkUser() {
+            const sessionData = localStorage.getItem('userSession');
+            if (sessionData) {
+                currentUser = JSON.parse(sessionData);
+                console.log('Utilizator conectat:', currentUser);
+            } else {
+                document.getElementById('authWarning').style.display = 'block';
+                document.getElementById('submitBtn').disabled = true;
+            }
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                document.getElementById('time').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function setupForm() {
+            document.getElementById('testForm').addEventListener('submit', handleSubmit);
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            
+            if (!currentUser) {
+                alert('Trebuie să fii conectat pentru a trimite testul!');
+                return;
+            }
+
+            clearInterval(timerInterval);
+            
+            const score = calculateScore();
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            
+            // Salvează în baza de date
+            try {
+                const { data, error } = await supabase
+                    .from('grades')
+                    .insert([{
+                        user_id: currentUser.id,
+                        test_id: TEST_ID,
+                        score: score,
+                        time_spent: timeSpent
+                    }])
+                    .select();
+
+                if (error) {
+                    if (error.code === '23505') {
+                        alert('Ai dat deja acest test!');
+                        return;
+                    }
+                    throw error;
+                }
+
+                showResult(score, timeSpent);
+                
+            } catch (error) {
+                console.error('Eroare la salvarea rezultatului:', error);
+                alert('Eroare la salvarea rezultatului în baza de date!');
+            }
+        }
+
+        function calculateScore() {
+            let score = 1; // punct din oficiu
+
+            // Partea I - răspunsurile corecte
+            const correctAnswers = {
+                q1: 'A', // 3,6 + 4,8 = 8,4
+                q2: 'A', // 4² - 3² = 16 - 9 = 7
+                q3: 'A', // 1728 : 12 = 144 rest 0
+                q4: 'A', // 4/8 * 3 = 12/24
+                q5: 'C', // divizorii lui 12
+                q6: 'B', // 2,4(5) este cea mai mare
+                q7: 'B', // 37/100 = 0,37
+                q8: 'C', // 750g = 0,75kg
+                q9: 'B'  // cubul are 12 muchii: 12 * 2,5 = 30
