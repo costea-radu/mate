@@ -633,21 +633,17 @@ function displayResults(totalScore, maxScore, percentage, breakdown) {
     }
 }
 
-// Funcție pentru obținerea utilizatorului curent
-async function getCurrentUser() {
+// Funcție pentru obținerea utilizatorului curent din localStorage
+function getCurrentUser() {
     try {
-        // Această funcție ar trebui să returneze utilizatorul curent din sistemul de autentificare
-        // Presupun că ai un sistem de autentificare implementat
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error || !user) {
-            console.log('Utilizator neautentificat');
-            return null;
+        // Verifică dacă există un utilizator conectat în localStorage
+        const currentUser = localStorage.getItem('currentUser');
+        if (currentUser) {
+            return JSON.parse(currentUser);
         }
-        
-        return user;
+        return null;
     } catch (error) {
-        console.error('Eroare la obținerea utilizatorului:', error);
+        console.error('Eroare la obținerea utilizatorului din localStorage:', error);
         return null;
     }
 }
